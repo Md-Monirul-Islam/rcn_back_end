@@ -81,3 +81,18 @@ class CustomerAddressViewSet(viewsets.ModelViewSet):
 class ProductRatingViewSet(viewsets.ModelViewSet):
     serializer_class = ProiductReviewSerializer
     queryset = ProductRating.objects.all()
+
+
+
+
+
+################### product Category ###################
+
+class CategoryList(generics.ListCreateAPIView):
+    queryset = ProductCategory.objects.all()
+    serializer_class = CategorySerializer
+
+
+class CategoryDetail(generics.RetrieveUpdateDestroyAPIView):
+    queryset = ProductCategory.objects.all()
+    serializer_class = CategoryDetailSerializer

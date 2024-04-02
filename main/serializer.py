@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Product, Vendor,Customer,Order,OrderItems,CustomerAddress, ProductRating
+from .models import Product, ProductCategory, Vendor,Customer,Order,OrderItems,CustomerAddress, ProductRating
 
 class VendorSerializer(serializers.ModelSerializer):
     class Meta:
@@ -63,5 +63,23 @@ class CustomerAddressSerializer(serializers.ModelSerializer):
 class ProiductReviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductRating
+        fields = '__all__'
+        depth = 1
+
+
+
+################### Category ###################
+
+class CategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductCategory
+        fields = '__all__'
+        depth = 1
+
+
+
+class CategoryDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductCategory
         fields = '__all__'
         depth = 1
