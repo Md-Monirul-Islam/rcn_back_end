@@ -2,6 +2,7 @@ from django.shortcuts import render
 from rest_framework import generics,permissions,viewsets
 from .models import *
 from .serializer import *
+from .pagination import CustomPagination
 
 # Create your views here.
 
@@ -20,6 +21,16 @@ class VendorDetails(generics.RetrieveUpdateDestroyAPIView):
 class ProductList(generics.ListCreateAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductListSerializer
+    pagination_class = CustomPagination
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        category_id = self.request.GET.get('category')
+        if category_id:
+            category = ProductCategory.objects.get(id=category_id)
+            qs = qs.filter(category=category)
+        return qs
+
 
 
 

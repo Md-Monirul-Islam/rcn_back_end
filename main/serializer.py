@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Product, ProductCategory, Vendor,Customer,Order,OrderItems,CustomerAddress, ProductRating
+from .models import Product, ProductCategory, ProductImage, Vendor,Customer,Order,OrderItems,CustomerAddress, ProductRating
 
 class VendorSerializer(serializers.ModelSerializer):
     class Meta:
@@ -18,16 +18,26 @@ class ProductListSerializer(serializers.ModelSerializer):
     product_ratings = serializers.StringRelatedField(many=True, read_only=True)
     class Meta:
         model = Product
-        fields = '__all__'
+        fields = ['id','category','vendor','title','detail','price','product_ratings']
         # depth = 1
+
 
 
 class ProductDetailSerializer(serializers.ModelSerializer):
     product_ratings = serializers.StringRelatedField(many=True, read_only=True)
+    product_image = serializers.StringRelatedField(many=True, read_only=True)
     class Meta:
         model = Product
-        fields = '__all__'
+        fields = ['id','category','vendor','title','slug','tags','detail','price','product_ratings','product_image']
         # depth = 1
+
+
+
+class ProductImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductImage
+        fields = ['id','product','image']
+
 
 
 class CustomerSerializer(serializers.ModelSerializer):
