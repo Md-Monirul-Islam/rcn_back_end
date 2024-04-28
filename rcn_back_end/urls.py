@@ -35,4 +35,4 @@ urlpatterns = [
     # name='token_obtain_pair'),
 
     # path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-]+static(settings.MEDIA_URL,document_root=settings.MEDIA_ROOT)
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
