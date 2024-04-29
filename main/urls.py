@@ -14,8 +14,12 @@ urlpatterns = [
 
     ######## Product ########
     path('products/',views.ProductList.as_view(),name='product-list'),
+
+    path('products/<str:tag>',views.TagProductList.as_view(),name='tag_product_list'),
     
     path('product/<int:pk>/',views.ProductDetail.as_view(),name='product_detail'),
+
+    path('related-products/<int:pk>/',views.RelatedProductList.as_view(),name='related_product'),
 
     ######## Product Category ########
     path('categories/',views.CategoryList.as_view(),name='categories'),
