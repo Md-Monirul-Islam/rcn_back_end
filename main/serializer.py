@@ -18,7 +18,7 @@ class ProductListSerializer(serializers.ModelSerializer):
     product_ratings = serializers.StringRelatedField(many=True, read_only=True)
     class Meta:
         model = Product
-        fields = ['id','category','vendor','title','slug','tag_list','detail','price','product_ratings']
+        fields = ['id','category','vendor','title','slug','tag_list','detail','price','product_ratings','image']
         # depth = 1
 
 

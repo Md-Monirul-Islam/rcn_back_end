@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from rest_framework.response import Response
 from rest_framework import generics,permissions,viewsets
 from .models import *
 from .serializer import *
@@ -57,7 +58,6 @@ class TagProductList(generics.ListCreateAPIView):
 class RelatedProductList(generics.ListCreateAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductListSerializer
-    pagination_class = CustomPagination
 
     def get_queryset(self):
         qs = super().get_queryset()
@@ -65,6 +65,48 @@ class RelatedProductList(generics.ListCreateAPIView):
         product = Product.objects.get(id=product_id)
         qs = qs.filter(category=product.category).exclude(id=product_id)
         return qs
+
+
+# class RelatedProductList(generics.ListAPIView):
+#     serializer_class = ProductListSerializer
+
+#     def get_queryset(self):
+#         product_id = self.kwargs['pk']
+#         product = Product.objects.get(id=product_id)
+#         related_products = Product.objects.filter(category=product.category).exclude(id=product_id)
+#         return related_products
+
+#     def list(self, request, *args, **kwargs):
+#         queryset = self.get_queryset()
+#         serializer = self.get_serializer(queryset, many=True)
+#         data = serializer.data
+#         for product in data:
+#             product_id = product['id']
+#             product['product_image'] = [image.image.url for image in Product.objects.get(id=product_id).product_image.all()]
+#         return Response(data)
+
+# class RelatedProductList(generics.ListAPIView):
+#     serializer_class = ProductListSerializer
+
+#     def get_queryset(self):
+#         product_id = self.kwargs['pk']
+#         product = Product.objects.get(id=product_id)
+#         related_products = Product.objects.filter(category=product.category).exclude(id=product_id)
+#         return related_products
+
+#     def list(self, request, *args, **kwargs):
+#         queryset = self.get_queryset()
+#         serializer = self.get_serializer(queryset, many=True)
+#         data = serializer.data
+#         for product in data:
+#             product_id = product['id']
+#             # Check if product_image exists and is not empty
+#             if 'product_image' in product and product['product_image']:
+#                 product['product_image'] = [image.image.url for image in Product.objects.get(id=product_id).product_image.all()]
+#             else:
+#                 # Set a default value for product_image
+#                 product['product_image'] = []  # Or set it to a placeholder image URL
+#         return Response(data)
 
 
 
