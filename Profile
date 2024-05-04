@@ -1,2 +1,0 @@
-web: gunicorn rcn_back_end.wsgi --log-file -
-worker: celery -A rcn_back_end worker --loglevel=info
