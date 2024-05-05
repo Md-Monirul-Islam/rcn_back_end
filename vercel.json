@@ -3,12 +3,16 @@
     "builds": [{
         "src": "rcn_back_end/wsgi.py",
         "use": "@vercel/python",
+<<<<<<< HEAD
         "config": { "maxLambdaSize": "15mb", "runtime": "python3.9" }
     },
     {
         "src": "build_files.sh",
         "use": "@vercel/static-build",
         "config": { "distDir": "staticfiles_build" }
+=======
+        "config": { "maxLambdaSize": "15mb", "runtime": "python3.19" }
+>>>>>>> 9b2fb556bbfd4a35dd0815d4dd2a3789f3cc8493
     }],
     "routes": [
         {
