@@ -87,17 +87,17 @@ WSGI_APPLICATION = 'rcn_back_end.wsgi.application'
 #     }
 # }
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'rcn_back_api_db_kpe',
-        'USER': 'postgres',
-        # 'PASSWORD': 'kpe_db_@121*#420_rcn_backend_api',
-        'PASSWORD': '123456Pl@',
-        'HOST': 'localhost',
-        'PORT': '5432',
-    }
-}
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'rcn_back_api_db_kpe',
+#         'USER': 'postgres',
+#         # 'PASSWORD': 'kpe_db_@121*#420_rcn_backend_api',
+#         'PASSWORD': '123456Pl@',
+#         'HOST': 'localhost',
+#         'PORT': '5432',
+#     }
+# }
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
