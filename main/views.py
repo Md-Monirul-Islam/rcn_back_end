@@ -1,6 +1,9 @@
 from django.shortcuts import render
 from rest_framework.response import Response
 from rest_framework import generics,permissions,viewsets
+from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse,HttpRequest
+from django.contrib.auth import authenticate
 from .models import *
 from .serializer import *
 from .pagination import CustomPagination
@@ -52,6 +55,25 @@ class TagProductList(generics.ListCreateAPIView):
         tag = self.kwargs['tag']
         qs = qs.filter(tags__icontains=tag)
         return qs
+    
+
+@csrf_exempt
+def CustomerLogin(request):
+    username = request.POST.get('username')
+    password = request.POST.get('password')
+    user = authenticate(username=username,password=password)
+    if user:
+        msg = {
+        'bool': True,
+        'user': user.username,
+        # 'user': user.password
+        }
+    else:
+        msg = {
+            'bool':False,
+            'msg':'Invalid username or password !!'
+        }
+    return JsonResponse(msg)
     
 
 

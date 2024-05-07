@@ -77,6 +77,7 @@ TEMPLATES = [
 WSGI_APPLICATION = 'rcn_back_end.wsgi.application'
 
 
+
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
