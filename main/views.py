@@ -4,6 +4,8 @@ from rest_framework import generics,permissions,viewsets
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse,HttpRequest
 from django.contrib.auth import authenticate
+from django.contrib.auth.models import User
+from django.contrib.auth.hashers import make_password
 from .models import *
 from .serializer import *
 from .pagination import CustomPagination
@@ -74,7 +76,47 @@ def CustomerLogin(request):
             'msg':'Invalid username or password !!'
         }
     return JsonResponse(msg)
-    
+
+
+
+
+@csrf_exempt
+def CustomerRegister(request):
+    first_name = request.POST.get('first_name')
+    last_name = request.POST.get('last_name')
+    username = request.POST.get('username')
+    email = request.POST.get('email')
+    phone = request.POST.get('phone')
+    password = request.POST.get('password')
+    user = User.objects.create(
+        first_name=first_name,
+        last_name=last_name,
+        username=username,
+        email=email,
+        password=password
+    )
+    if user:
+        #Create customer
+        customer = Customer.objects.create(
+            user=user,
+            phone=phone,
+        )
+        msg = {
+        'bool': True,
+        'user': user.id,
+        'customer': customer.id,
+        'msg':'Thanks for your registration. Now you can login.'
+        }
+    else:
+        msg = {
+            'bool':False,
+            'msg':'Oops... Somethings went Wrong !!'
+        }
+    return JsonResponse(msg)
+
+
+
+
 
 
 class RelatedProductList(generics.ListCreateAPIView):

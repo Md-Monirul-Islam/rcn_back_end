@@ -26,11 +26,14 @@ urlpatterns = [
     
     path('category/<int:pk>/',views.CategoryDetail.as_view(),name='category_detail'),
 
+    ######## Customer section ########
     path('customers/',views.CustomerList.as_view(),name='customers_list'),
 
     path('customer/<int:pk>/',views.CustomerDetails.as_view(),name='customer_details'),
 
     path('customer-login/',views.CustomerLogin,name='customer_login'),
+
+    path('customer-register/',views.CustomerRegister,name='customer_register'),
 
     path('orders/',views.OrderList.as_view(),name='order_list'),
 
