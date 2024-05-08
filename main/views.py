@@ -4,8 +4,9 @@ from rest_framework import generics,permissions,viewsets
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse,HttpRequest
 from django.contrib.auth import authenticate
-from django.contrib.auth.models import User
 from django.contrib.auth.hashers import make_password
+from django.contrib.auth.models import User
+from django.db import IntegrityError
 from .models import *
 from .serializer import *
 from .pagination import CustomPagination
@@ -88,33 +89,102 @@ def CustomerRegister(request):
     email = request.POST.get('email')
     phone = request.POST.get('phone')
     password = request.POST.get('password')
-    user = User.objects.create(
-        first_name=first_name,
-        last_name=last_name,
-        username=username,
-        email=email,
-        password=password
-    )
-    if user:
-        #Create customer
-        customer = Customer.objects.create(
-            user=user,
-            phone=phone,
+    hashed_password = make_password(password)
+    try:
+        user = User.objects.create(
+            first_name=first_name,
+            last_name=last_name,
+            username=username,
+            email=email,
+            password=hashed_password
         )
-        msg = {
-        'bool': True,
-        'user': user.id,
-        'customer': customer.id,
-        'msg':'Thanks for your registration. Now you can login.'
-        }
-    else:
+        
+        try:
+            if user:
+                #Create customer
+                customer = Customer.objects.create(
+                    user=user,
+                    phone=phone,
+                )
+                msg = {
+                'bool': True,
+                'user': user.id,
+                'customer': customer.id,
+                'msg':'Thanks for your registration. Now you can login.'
+                }
+        except IntegrityError:
+            msg = {
+                'bool':False,
+                'msg':"Mobile number already exist !!"
+            }
+        else:
+            msg = {
+                'bool':False,
+                'msg':'Oops... Somethings went Wrong !!'
+            }
+    except IntegrityError:
         msg = {
             'bool':False,
-            'msg':'Oops... Somethings went Wrong !!'
+            'msg':"Username already exist !!"
         }
     return JsonResponse(msg)
 
 
+
+# @csrf_exempt
+# def CustomerRegister(request):
+#     if request.method == 'POST':
+#         try:
+#             first_name = request.POST.get('first_name')
+#             last_name = request.POST.get('last_name')
+#             username = request.POST.get('username')
+#             email = request.POST.get('email')
+#             phone = request.POST.get('phone')
+#             password = request.POST.get('password')
+#             hashed_password = make_password(password)
+
+#             user = User.objects.create(
+#                 first_name=first_name,
+#                 last_name=last_name,
+#                 username=username,
+#                 email=email,
+#                 password=hashed_password
+#             )
+
+#             if user:
+#                 customer = Customer.objects.create(
+#                     user=user,
+#                     phone=phone,
+#                 )
+#                 msg = {
+#                     'bool': True,
+#                     'user': user.id,
+#                     'customer': customer.id,
+#                     'msg': 'Thanks for your registration. Now you can login.'
+#                 }
+#         except IntegrityError as e:
+#             if 'username' in str(e):
+#                 msg = {
+#                     'bool': False,
+#                     'msg': "Username already exists!"
+#                 }
+#             elif 'phone' in str(e):
+#                 msg = {
+#                     'bool': False,
+#                     'msg': "Phone number already exists!"
+#                 }
+#         else:
+#             msg = {
+#                 'bool': False,
+#                 'msg': 'Oops... Something went wrong!'
+#             }
+#     else:
+#         msg = {
+#             'bool': False,
+#             'msg': 'Invalid request method!'
+#         }
+
+#     return JsonResponse(msg)
 
 
 
