@@ -98,9 +98,9 @@ def CustomerRegister(request):
             email=email,
             password=hashed_password
         )
-        
-        try:
-            if user:
+               
+        if user:
+            try:
                 #Create customer
                 customer = Customer.objects.create(
                     user=user,
@@ -112,11 +112,12 @@ def CustomerRegister(request):
                 'customer': customer.id,
                 'msg':'Thanks for your registration. Now you can login.'
                 }
-        except IntegrityError:
-            msg = {
+            except IntegrityError:
+                msg = {
                 'bool':False,
-                'msg':"Mobile number already exist !!"
+                'msg':"Phone already exist !!"
             }
+        
         else:
             msg = {
                 'bool':False,
