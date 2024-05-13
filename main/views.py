@@ -66,10 +66,11 @@ def CustomerLogin(request):
     password = request.POST.get('password')
     user = authenticate(username=username,password=password)
     if user:
+        customer = Customer.objects.get(user=user)
         msg = {
         'bool': True,
         'user': user.username,
-        # 'user': user.password
+        'id': customer.id
         }
     else:
         msg = {
@@ -262,6 +263,10 @@ class CustomerDetails(generics.RetrieveUpdateDestroyAPIView):
 class OrderList(generics.ListCreateAPIView):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
+
+    def post(self,request,*args, **kwargs):
+        print(request.POST)
+        return super().post(request,*args, **kwargs)
     
 
 
