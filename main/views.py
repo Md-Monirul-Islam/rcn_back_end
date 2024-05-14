@@ -269,6 +269,14 @@ class OrderList(generics.ListCreateAPIView):
         return super().post(request,*args, **kwargs)
     
 
+#### Order Items
+
+class OrderItemsList(generics.ListCreateAPIView):
+    queryset = OrderItems.objects.all()
+    serializer_class = OrderItemSerializer
+
+    
+
 
 class OrderDetails(generics.ListAPIView):
     # queryset = Order.objects.all()

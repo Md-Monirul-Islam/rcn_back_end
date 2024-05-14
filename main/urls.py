@@ -39,9 +39,7 @@ urlpatterns = [
 
     path('order/<int:pk>/',views.OrderDetails.as_view(),name='order_details'),
 
-    path('order-items/',views.OrderList.as_view(),name='order_items_list'),
-
-    path('order-item/<int:pk>/',views.OrderDetails.as_view(),name='order_item'),
+    path('order-items/',views.OrderItemsList.as_view(),name='order_items'),
 
 ]
 urlpatterns += router.urls
