@@ -296,6 +296,18 @@ class OerderItemList(generics.ListCreateAPIView):
 
 
 
+class CustomerOrderItemsList(generics.ListAPIView):
+    queryset = OrderItems.objects.all()
+    serializer_class = OrderItemSerializer
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        customer_id = self.kwargs['pk']
+        qs = qs.filter(order__customer__id=customer_id)
+        return qs
+
+
+
 class OrderItemDetailS(generics.RetrieveUpdateDestroyAPIView):
     queryset = OrderItems.objects.all()
     serializer_class = OrderItemSerializer
