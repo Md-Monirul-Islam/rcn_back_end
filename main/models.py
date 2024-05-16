@@ -55,7 +55,7 @@ class Order(models.Model):
     order_status = models.BooleanField(default=False)
 
     def __str__(self):
-        return (f'self.order_time')
+        return f"Order #{self.pk} - {str(self.order_time)}"
 
 
 

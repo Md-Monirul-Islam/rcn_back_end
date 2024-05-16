@@ -41,5 +41,7 @@ urlpatterns = [
 
     path('order-items/',views.OrderItemsList.as_view(),name='order_items'),
 
+    path('update-order-status/<int:pk>/',views.Update_Order_Status, name='update_order_status'),
+
 ]
 urlpatterns += router.urls
