@@ -29,7 +29,8 @@ class Product(models.Model):
     tags = models.TextField(null=True)
     image = models.ImageField(upload_to='product_images',null=True)
     demo_url = models.URLField(null=True,blank=True)
-
+    product_file = models.FileField(upload_to='product_files/',null=True)
+    downloads = models.CharField(max_length=200,null=True,default=0)
     def __str__(self):
         return self.title
     

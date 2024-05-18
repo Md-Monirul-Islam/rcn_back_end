@@ -355,3 +355,24 @@ def Update_Order_Status(request, pk):
                 'bool': True,
             }
         return JsonResponse(msg)
+    
+
+
+@csrf_exempt
+def Update_Product_Download_Count(request, pk):
+    product_id = pk
+    if request.method == "POST":
+        product = Product.objects.get(id=product_id)
+        totalDownloads = product.downloads
+        totalDownloads += 1
+        if totalDownloads == 0:
+            totalDownloads = 1
+        update_product_download_Count = Product.objects.filter(id=product_id).update(downloads=totalDownloads)
+        msg = {
+            'bool': False,
+        }
+        if update_product_download_Count:
+            msg = {
+                'bool': True,
+            }
+        return JsonResponse(msg)
