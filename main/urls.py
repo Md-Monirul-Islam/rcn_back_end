@@ -45,7 +45,7 @@ urlpatterns = [
 
     path('update-order-status/<int:pk>/',views.Update_Order_Status, name='update_order_status'),
 
-    path('update-product-download-count/<int:pk>/',views.Update_Product_Download_Count, name='update_product_download_count'),
+    path('update-product-download-count/<str:product_id>/', views.Update_Product_Download_Count, name='update_product_download_count'),
 
 ]
 urlpatterns += router.urls
