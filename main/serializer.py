@@ -64,13 +64,27 @@ class OrderSerializer(serializers.ModelSerializer):
         # depth = 1
 
 
+class OrderDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OrderItems
+        fields = ['id','order','product']
+        # depth = 1
+
+
+
 class OrderItemSerializer(serializers.ModelSerializer):
-    order = OrderSerializer()
-    product = ProductDetailSerializer()
+    # order = OrderSerializer()
+    # product = ProductDetailSerializer()
     class Meta:
         model = OrderItems
         fields = '__all__'
         # depth = 1
+
+    def to_representation(self, instance):
+        response = super().to_representation(instance)
+        response['order'] = OrderSerializer(instance.order, context=self.context).data
+        response['product'] = ProductDetailSerializer(instance.product, context=self.context).data
+        return response
 
 
 class CustomerAddressSerializer(serializers.ModelSerializer):
