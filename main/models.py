@@ -55,6 +55,7 @@ class Order(models.Model):
     customer = models.ForeignKey(Customer,on_delete=models.CASCADE,related_name='customer_order')
     order_time = models.DateTimeField(auto_now_add=True)
     order_status = models.BooleanField(default=False)
+    total_amount = models.DecimalField(max_digits=10,decimal_places=2,default=0)
 
     def __str__(self):
         return f"Order #{self.pk} - {str(self.order_time)}"
@@ -100,4 +101,13 @@ class ProductImage(models.Model):
 
     def __str__(self):
         return self.image.url
+    
+
+
+class WishList(models.Model):
+    product = models.ForeignKey(Product,on_delete=models.CASCADE)
+    customer = models.ForeignKey(Customer,on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"{self.product.title} - {self.customer.user.first_name}"
 

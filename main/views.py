@@ -36,8 +36,12 @@ class ProductList(generics.ListCreateAPIView):
         if category_id:
             category = ProductCategory.objects.get(id=category_id)
             qs = qs.filter(category=category)
+        
+        if 'fetch_limit' in self.request.GET:
+            limit = self.request.GET['fetch_limit']
+            qs = qs[:int(limit)]
         return qs
-
+    
 
 
 
