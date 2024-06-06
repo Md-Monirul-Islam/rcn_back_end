@@ -47,5 +47,14 @@ urlpatterns = [
 
     path('update-product-download-count/<str:product_id>/', views.Update_Product_Download_Count, name='update_product_download_count'),
 
+    #WishList
+    path('wishlist/', views.Wish_List.as_view(),name='wishlist'),
+
+    path('check-in-wishlist/',views.check_in_wishlist,name='check_in_wishlist'),
+
+    path('customer/<int:pk>/wishitems/',views.Wish_Items.as_view(),name='wishitems'),
+
+    path('remove-from-wishlist/', views.remove_from_wishlist, name='remove_from_wishlist'),
+
 ]
 urlpatterns += router.urls

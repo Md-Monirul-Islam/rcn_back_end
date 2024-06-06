@@ -380,3 +380,47 @@ def Update_Product_Download_Count(request, product_id):
             }
         return JsonResponse(msg)
     
+
+
+
+### WishList
+class Wish_List(generics.ListCreateAPIView):
+    queryset = WishList.objects.all()
+    serializer_class = WishListSerializer
+
+
+
+@csrf_exempt
+def check_in_wishlist(request):
+    if request.method == 'POST':
+        customer_id = request.POST.get('customer')
+        product_id = request.POST.get('product')
+        if WishList.objects.filter(customer_id=customer_id, product_id=product_id).exists():
+            return JsonResponse({'bool': True})
+        else:
+            return JsonResponse({'bool': False})
+    return JsonResponse({'error': 'Invalid request method'}, status=405)
+
+
+
+class Wish_Items(generics.ListAPIView):
+    queryset = WishList.objects.all()
+    serializer_class = WishListSerializer
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        customer_id = self.kwargs['pk']
+        qs = qs.filter(customer_id=customer_id)
+        return qs
+
+
+
+@csrf_exempt
+def remove_from_wishlist(request):
+    if request.method == 'POST':
+        wishlist_id = request.POST.get('wishlist_id')
+        response = WishList.objects.filter(id=wishlist_id).delete()
+        msg = {'bool': False}
+        if response[0]:
+            msg = {'bool': True}
+    return JsonResponse(msg)

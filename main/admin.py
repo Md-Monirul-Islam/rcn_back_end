@@ -38,4 +38,7 @@ class OrderAdmin(admin.ModelAdmin):
     list_display = ['id','customer','total_amount','order_time','order_status']
 admin.site.register(Order,OrderAdmin)
 
-admin.site.register(WishList)
+
+class WishListAdmin(admin.ModelAdmin):
+    list_display = ['id','product','customer']
+admin.site.register(WishList,WishListAdmin)

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Product, ProductCategory, ProductImage, Vendor,Customer,Order,OrderItems,CustomerAddress, ProductRating
+from .models import Product, ProductCategory, ProductImage, Vendor,Customer,Order,OrderItems,CustomerAddress, ProductRating, WishList
 
 class VendorSerializer(serializers.ModelSerializer):
     class Meta:
@@ -51,9 +51,9 @@ class CustomerSerializer(serializers.ModelSerializer):
         model = Customer
         fields = '__all__'
         
-        def __init__(self,*args, **kwargs):
-            super(CustomerSerializer,self).__init__(*args, **kwargs)
-        depth = 1
+    def __init__(self,*args, **kwargs):
+        super(CustomerSerializer,self).__init__(*args, **kwargs)
+    # depth = 1
 
 
 class OrderSerializer(serializers.ModelSerializer):
@@ -118,3 +118,19 @@ class CategoryDetailSerializer(serializers.ModelSerializer):
         model = ProductCategory
         fields = '__all__'
         depth = 1
+
+
+class WishListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = WishList
+        fields = '__all__'
+        # depth = 1
+    
+    def __init__(self,*args, **kwargs):
+        super(WishListSerializer,self).__init__(*args, **kwargs)
+
+    def to_representation(self, instance):
+        response = super().to_representation(instance)
+        response['customer'] = CustomerSerializer(instance.customer, context=self.context).data
+        response['product'] = ProductDetailSerializer(instance.product, context=self.context).data
+        return response

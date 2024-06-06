@@ -18,6 +18,9 @@ class ProductCategory(models.Model):
     def __str__(self):
         return self.title
     
+    class Meta:
+        verbose_name_plural = "Product Categories"
+    
 
 class Product(models.Model):
     category = models.ForeignKey(ProductCategory,on_delete=models.SET_NULL,null=True,related_name='category_product')
@@ -70,6 +73,9 @@ class OrderItems(models.Model):
 
     def __str__(self):
         return self.product.title
+    
+    class Meta:
+        verbose_name_plural = 'Order Items'
 
 
 class CustomerAddress(models.Model):
@@ -79,6 +85,9 @@ class CustomerAddress(models.Model):
 
     def __str__(self):
         return self.address
+    
+    class Meta:
+        verbose_name_plural = 'Customer Addresses'
 
 
 
