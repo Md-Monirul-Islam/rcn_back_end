@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from django.contrib.auth.models import User
 from .models import Product, ProductCategory, ProductImage, Vendor,Customer,Order,OrderItems,CustomerAddress, ProductRating, WishList
 
 class VendorSerializer(serializers.ModelSerializer):
@@ -45,6 +46,23 @@ class ProductImageSerializer(serializers.ModelSerializer):
         fields = ['id','product','image']
 
 
+# class UserSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = User
+#         fields = ['first_name', 'last_name', 'username', 'email']
+
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['first_name', 'last_name', 'username', 'email']
+
+    def update(self, instance, validated_data):
+        if 'username' in validated_data and instance.username == validated_data['username']:
+            validated_data.pop('username')
+        return super().update(instance, validated_data)
+
+
 
 class CustomerSerializer(serializers.ModelSerializer):
     class Meta:
@@ -54,6 +72,23 @@ class CustomerSerializer(serializers.ModelSerializer):
     def __init__(self,*args, **kwargs):
         super(CustomerSerializer,self).__init__(*args, **kwargs)
     # depth = 1
+
+
+class CustomerDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Customer
+        fields = '__all__'
+
+    def to_representation(self, instance):
+        response = super().to_representation(instance)
+        response['user'] = UserProfileSerializer(instance.user, context=self.context).data
+        return response
+    
+
+class UserDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = '__all__'
 
 
 class OrderSerializer(serializers.ModelSerializer):

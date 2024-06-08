@@ -31,6 +31,8 @@ urlpatterns = [
 
     path('customer/<int:pk>/',views.CustomerDetails.as_view(),name='customer_details'),
 
+    path('user/<int:pk>/',views.UserDetails.as_view(),name='user_details'),
+
     path('customer-login/',views.CustomerLogin,name='customer_login'),
 
     path('customer-register/',views.CustomerRegister,name='customer_register'),

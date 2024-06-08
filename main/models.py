@@ -49,6 +49,7 @@ class Product(models.Model):
 class Customer(models.Model):
     user = models.ForeignKey(User,on_delete=models.CASCADE)
     phone = models.PositiveBigIntegerField(unique=True)
+    profile_image = models.ImageField(upload_to='profile_image/',blank=True,null=True)
 
     def __str__(self):
         return self.user.username
