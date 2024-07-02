@@ -50,35 +50,26 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['first_name', 'last_name', 'username', 'email', 'password']
-
-    def update(self, instance, validated_data):
-        password = validated_data.pop('password', None)
-        for attr, value in validated_data.items():
-            setattr(instance, attr, value)
-        if password:
-            instance.set_password(password)
-        instance.save()
-        return instance
+        fields = ['id', 'first_name', 'last_name', 'username', 'email', 'password']
 
 class CustomerSerializer(serializers.ModelSerializer):
     user = UserSerializer()
 
     class Meta:
         model = Customer
-        fields = ['user', 'profile_image', 'phone']
-        
+        fields = ['id', 'user', 'profile_image', 'phone']
+
     def update(self, instance, validated_data):
-        user_data = validated_data.pop('user')
-        user = instance.user
+        user_data = validated_data.pop('user', None)
+        if user_data:
+            user_instance = instance.user
+            for attr, value in user_data.items():
+                setattr(user_instance, attr, value)
+            user_instance.save()
 
         instance.profile_image = validated_data.get('profile_image', instance.profile_image)
         instance.phone = validated_data.get('phone', instance.phone)
         instance.save()
-
-        user_serializer = UserSerializer(instance=user, data=user_data, partial=True)
-        if user_serializer.is_valid():
-            user_serializer.save()
 
         return instance
         
