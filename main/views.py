@@ -259,7 +259,13 @@ class CustomerList(generics.ListCreateAPIView):
 
 class CustomerDetails(generics.RetrieveUpdateDestroyAPIView):
     queryset = Customer.objects.all()
-    serializer_class = CustomerDetailSerializer
+    serializer_class = CustomerSerializer
+
+
+class UserDetails(generics.RetrieveUpdateDestroyAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+
 
 
 
@@ -326,12 +332,6 @@ class CustomerAddressViewSet(viewsets.ModelViewSet):
 class ProductRatingViewSet(viewsets.ModelViewSet):
     serializer_class = ProiductReviewSerializer
     queryset = ProductRating.objects.all()
-
-
-
-class UserDetails(generics.RetrieveUpdateDestroyAPIView):
-    queryset = User.objects.all()
-    serializer_class = UserProfileSerializer
 
 
 

@@ -45,50 +45,45 @@ class ProductImageSerializer(serializers.ModelSerializer):
         model = ProductImage
         fields = ['id','product','image']
 
+class UserSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True, required=False)
 
-# class UserSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = User
-#         fields = ['first_name', 'last_name', 'username', 'email']
-
-
-class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['first_name', 'last_name', 'username', 'email']
+        fields = ['first_name', 'last_name', 'username', 'email', 'password']
 
     def update(self, instance, validated_data):
-        if 'username' in validated_data and instance.username == validated_data['username']:
-            validated_data.pop('username')
-        return super().update(instance, validated_data)
-
-
+        password = validated_data.pop('password', None)
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        if password:
+            instance.set_password(password)
+        instance.save()
+        return instance
 
 class CustomerSerializer(serializers.ModelSerializer):
+    user = UserSerializer()
+
     class Meta:
         model = Customer
-        fields = '__all__'
+        fields = ['user', 'profile_image', 'phone']
         
-    def __init__(self,*args, **kwargs):
-        super(CustomerSerializer,self).__init__(*args, **kwargs)
-    # depth = 1
+    def update(self, instance, validated_data):
+        user_data = validated_data.pop('user')
+        user = instance.user
 
+        instance.profile_image = validated_data.get('profile_image', instance.profile_image)
+        instance.phone = validated_data.get('phone', instance.phone)
+        instance.save()
 
-class CustomerDetailSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Customer
-        fields = '__all__'
+        user_serializer = UserSerializer(instance=user, data=user_data, partial=True)
+        if user_serializer.is_valid():
+            user_serializer.save()
 
-    def to_representation(self, instance):
-        response = super().to_representation(instance)
-        response['user'] = UserProfileSerializer(instance.user, context=self.context).data
-        return response
+        return instance
+        
     
-
-class UserDetailSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = '__all__'
+    # depth = 1
 
 
 class OrderSerializer(serializers.ModelSerializer):
