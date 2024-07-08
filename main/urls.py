@@ -58,5 +58,13 @@ urlpatterns = [
 
     path('remove-from-wishlist/', views.remove_from_wishlist, name='remove_from_wishlist'),
 
+
+
+    path('initiate/', views.initiate_payment, name='initiate_payment'),
+    path('success/', views.payment_success, name='payment_success'),
+    path('fail/', views.payment_fail, name='payment_fail'),
+    path('cancel/', views.payment_cancel, name='payment_cancel'),
+
+
 ]
 urlpatterns += router.urls

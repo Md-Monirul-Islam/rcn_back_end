@@ -1,6 +1,6 @@
-from rest_framework import serializers
+from rest_framework import serializers, generics
 from django.contrib.auth.models import User
-from .models import Product, ProductCategory, ProductImage, Vendor,Customer,Order,OrderItems,CustomerAddress, ProductRating, WishList
+from .models import Product, ProductCategory, ProductImage, Transaction, Vendor,Customer,Order,OrderItems,CustomerAddress, ProductRating, WishList
 
 class VendorSerializer(serializers.ModelSerializer):
     class Meta:
@@ -52,6 +52,13 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ['id', 'first_name', 'last_name', 'username', 'email', 'password']
 
+class UserSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True, required=False)
+
+    class Meta:
+        model = User
+        fields = ['id', 'first_name', 'last_name', 'username', 'email', 'password']
+
 class CustomerSerializer(serializers.ModelSerializer):
     user = UserSerializer()
 
@@ -72,6 +79,10 @@ class CustomerSerializer(serializers.ModelSerializer):
         instance.save()
 
         return instance
+
+class CustomerDetails(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Customer.objects.all()
+    serializer_class = CustomerSerializer
         
     
     # depth = 1
@@ -155,3 +166,10 @@ class WishListSerializer(serializers.ModelSerializer):
         response['customer'] = CustomerSerializer(instance.customer, context=self.context).data
         response['product'] = ProductDetailSerializer(instance.product, context=self.context).data
         return response
+    
+
+
+    class TransactionSerializer(serializers.ModelSerializer):
+        class Meta:
+            model = Transaction,
+            fields = '__all__',

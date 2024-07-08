@@ -1,3 +1,4 @@
+from django.utils import timezone
 from django.db import models
 from django.contrib.auth.models import User
 
@@ -82,6 +83,7 @@ class OrderItems(models.Model):
 class CustomerAddress(models.Model):
     customer = models.ForeignKey(Customer,on_delete=models.CASCADE,related_name='customer_address')
     address = models.TextField()
+    post = models.CharField(max_length=100,null=True,blank=True)
     default_address = models.BooleanField(default=False)
 
     def __str__(self):
@@ -120,4 +122,31 @@ class WishList(models.Model):
 
     def __str__(self):
         return f"{self.product.title} - {self.customer.user.first_name}"
+
+
+
+class Transaction(models.Model):
+    TRANSACTION_STATUS = (
+        ('INITIATED', 'Initiated'),
+        ('SUCCESS', 'Success'),
+        ('FAILED', 'Failed'),
+        ('CANCELLED', 'Cancelled'),
+    )
+
+    transaction_id = models.CharField(max_length=100, unique=True)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    currency = models.CharField(max_length=3, default='BDT')
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    customer_address = models.ForeignKey(CustomerAddress, on_delete=models.CASCADE)
+    customer_email = models.EmailField()
+    customer_phone = models.CharField(max_length=15)
+    customer_postcode = models.CharField(max_length=20)
+    status = models.CharField(max_length=10, choices=TRANSACTION_STATUS, default='INITIATED')
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.transaction_id} - {self.status}"
+
+
 
