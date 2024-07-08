@@ -457,12 +457,10 @@ def initiate_payment(request):
 
         customer = order.customer
         user = customer.user
-        customer_address_id = post_data.get('customer_address')
+        customer_address = customer.customer_address.filter(default_address=True).first()
         
-        try:
-            customer_address = CustomerAddress.objects.get(id=customer_address_id)
-        except CustomerAddress.DoesNotExist:
-            return Response({"error": "Customer address does not exist"}, status=400)
+        if not customer_address:
+            return Response({"error": "Default customer address does not exist"}, status=400)
 
         transaction_id = uuid4().hex
         transaction = Transaction.objects.create(
@@ -471,8 +469,8 @@ def initiate_payment(request):
             user=user,
             customer_address=customer_address,
             customer_email=user.email,
-            customer_phone=customer_address.phone,
-            customer_postcode=customer_address.postcode,
+            customer_phone=customer.phone,
+            customer_postcode=customer_address.post,
         )
 
         payment_data = {
@@ -493,7 +491,7 @@ def initiate_payment(request):
             'cus_email': transaction.customer_email,
             'cus_phone': transaction.customer_phone,
             'cus_add1': customer_address.address,
-            'cus_city': customer_address.city,
+            # 'cus_city': 'Dhaka',
             'cus_postcode': transaction.customer_postcode,
             'ship_name': user.get_full_name(),
             'ship_add1': 'Dhaka',
