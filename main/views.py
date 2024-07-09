@@ -446,6 +446,7 @@ base_url = 'http://127.0.0.1:8000'
 def initiate_payment(request):
     if request.method == 'POST':
         post_data = request.data
+        print(post_data)
         order_id = post_data.get('order_id')
         
         try:
@@ -453,15 +454,16 @@ def initiate_payment(request):
         except Order.DoesNotExist:
             return Response({"error": "Order does not exist"}, status=400)
         
-        total_amount = sum(item.price * item.quantity for item in order.order_items.all())
-
+        total_amount = post_data.get('amount')
+        
         customer = order.customer
         user = customer.user
+        
         customer_address = customer.customer_address.filter(default_address=True).first()
         
         if not customer_address:
             return Response({"error": "Default customer address does not exist"}, status=400)
-
+        print('Customer address founts',customer_address)
         transaction_id = uuid4().hex
         transaction = Transaction.objects.create(
             transaction_id=transaction_id,
@@ -491,7 +493,7 @@ def initiate_payment(request):
             'cus_email': transaction.customer_email,
             'cus_phone': transaction.customer_phone,
             'cus_add1': customer_address.address,
-            # 'cus_city': 'Dhaka',
+            'cus_city': 'Dhaka',
             'cus_postcode': transaction.customer_postcode,
             'ship_name': user.get_full_name(),
             'ship_add1': 'Dhaka',
@@ -502,9 +504,10 @@ def initiate_payment(request):
             'ship_country': 'Bangladesh',
             # Add any other required fields by SSLCommerz
         }
-
+        print(payment_data)
         response = requests.post('https://sandbox.sslcommerz.com/gwprocess/v4/api.php', data=payment_data)
         return Response(response.json())
+    
 
 @api_view(['POST'])
 def payment_success(request):
