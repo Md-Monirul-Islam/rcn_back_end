@@ -376,6 +376,21 @@ class CustomerAddressList(generics.ListAPIView):
         customer_id = self.kwargs['pk']
         qs = qs.filter(customer__id = customer_id)
         return qs
+    
+
+
+@csrf_exempt
+def make_default_address(request, pk):
+    if request.method == 'POST':
+        address_id = request.POST.get('default_address')
+        if address_id:
+            # Reset all addresses to not be default
+            CustomerAddress.objects.filter(customer=pk).update(default_address=False)
+            # Set the selected address as default
+            response = CustomerAddress.objects.filter(id=address_id).update(default_address=True)
+            msg = {'bool': bool(response)}
+            return JsonResponse(msg)
+    return JsonResponse({'bool': False})
         
 
 

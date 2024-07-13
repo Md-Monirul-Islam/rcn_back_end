@@ -32,7 +32,9 @@ urlpatterns = [
 
     path('customer/<int:pk>/',views.CustomerDetails.as_view(),name='customer_details'),
     
-    path('customer/<int:pk>/address-list/',views.CustomerAddressList.as_view(),name='customer_details'),
+    path('customer/<int:pk>/address-list/',views.CustomerAddressList.as_view(),name='customer_address_list'),
+
+    path('make-default-address/<int:pk>/',views.make_default_address,name='make_default_address'),
 
     path('user/<int:pk>/',views.UserDetails.as_view(),name='user_details'),
 
