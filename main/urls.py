@@ -35,6 +35,8 @@ urlpatterns = [
 
     path('customer-login/',views.CustomerLogin,name='customer_login'),
 
+    path('customer-logout/',views.logout_view,name='customer_logout'),
+
     path('customer-register/',views.CustomerRegister,name='customer_register'),
 
     path('orders/',views.OrderList.as_view(),name='order_list'),

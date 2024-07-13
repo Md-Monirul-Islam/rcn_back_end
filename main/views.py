@@ -13,6 +13,8 @@ from .models import *
 from .serializer import *
 from .pagination import CustomPagination
 from rest_framework import status
+from django.contrib.auth import logout
+from rest_framework.decorators import api_view
 
 # Create your views here.
 
@@ -137,6 +139,17 @@ def CustomerRegister(request):
             'msg':"Username already exist !!"
         }
     return JsonResponse(msg)
+
+
+# Logout
+@api_view(['POST'])
+def logout_view(request):
+    # # For token-based authentication
+    # if request.auth:
+    #     request.auth.delete()
+    # For session-based authentication
+    logout(request)
+    return Response({"message": "Logged out successfully"}, status=status.HTTP_200_OK)
 
 
 
@@ -518,10 +531,11 @@ def payment_success(request):
             transaction = Transaction.objects.get(transaction_id=transaction_id)
             transaction.status = 'SUCCESS'
             transaction.save()
-            client_site_url = f'http://localhost:5173/payment_status?transaction_id={transaction_id}&status={transaction.status}'
+            client_site_url = f'http://localhost:5173/'
             return redirect(client_site_url)
         except Transaction.DoesNotExist:
             return Response({'error': 'Transaction not found'}, status=status.HTTP_404_NOT_FOUND)
+            
 
 @api_view(['POST'])
 def payment_fail(request):
