@@ -122,8 +122,12 @@ class OrderItemSerializer(serializers.ModelSerializer):
 class CustomerAddressSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomerAddress
-        fields = '__all__'
-        depth = 1
+        fields = ['id','customer','address','city','post','default_address']
+        
+    def to_representation(self, instance):
+        response = super().to_representation(instance)
+        response['customer'] = CustomerSerializer(instance.customer, context=self.context).data
+        return response
 
 
 

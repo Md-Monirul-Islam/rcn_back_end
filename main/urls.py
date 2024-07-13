@@ -1,9 +1,10 @@
 from django.urls import path
 from .import views
 from rest_framework import routers
+from .views import CustomerAddressViewSet
 
 router = routers.DefaultRouter()
-router.register('customer-address',views.CustomerAddressViewSet)
+router.register(r'address', CustomerAddressViewSet, basename='address')
 router.register('product-rating',views.ProductRatingViewSet)
 
 urlpatterns = [
@@ -30,6 +31,8 @@ urlpatterns = [
     path('customers/',views.CustomerList.as_view(),name='customers_list'),
 
     path('customer/<int:pk>/',views.CustomerDetails.as_view(),name='customer_details'),
+    
+    path('customer/<int:pk>/address-list/',views.CustomerAddressList.as_view(),name='customer_details'),
 
     path('user/<int:pk>/',views.UserDetails.as_view(),name='user_details'),
 
@@ -46,6 +49,8 @@ urlpatterns = [
     path('order-items/',views.OrderItemsList.as_view(),name='order_items'),
 
     path('customer/<int:pk>/order-items/',views.CustomerOrderItemsList.as_view(),name='customer_order_items'),
+
+    # path('address',views.CustomerAddressViewSet.as_view(),name='address'),
 
     path('update-order-status/<int:pk>/',views.Update_Order_Status, name='update_order_status'),
 

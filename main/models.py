@@ -83,6 +83,7 @@ class OrderItems(models.Model):
 class CustomerAddress(models.Model):
     customer = models.ForeignKey(Customer,on_delete=models.CASCADE,related_name='customer_address')
     address = models.TextField()
+    city = models.CharField(max_length=100,null=True,blank=True)
     post = models.CharField(max_length=100,null=True,blank=True)
     default_address = models.BooleanField(default=False)
 

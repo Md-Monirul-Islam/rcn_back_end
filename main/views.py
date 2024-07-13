@@ -15,6 +15,7 @@ from .pagination import CustomPagination
 from rest_framework import status
 from django.contrib.auth import logout
 from rest_framework.decorators import api_view
+from django.views.decorators.csrf import csrf_exempt
 
 # Create your views here.
 
@@ -343,6 +344,40 @@ class CustomerAddressViewSet(viewsets.ModelViewSet):
     serializer_class = CustomerAddressSerializer
     queryset = CustomerAddress.objects.all()
 
+    def create(self, request, *args, **kwargs):
+        data = request.data.copy()
+        customer_id = data.get('customer')
+        
+        if not customer_id:
+            return Response({'error': 'Customer ID is required'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            customer = Customer.objects.get(id=customer_id)
+        except Customer.DoesNotExist:
+            return Response({'error': 'Invalid Customer ID'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        data['customer'] = customer.id
+        
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+    
+
+# customer address list
+
+class CustomerAddressList(generics.ListAPIView):
+    queryset = CustomerAddress.objects.all()
+    serializer_class = CustomerAddressSerializer
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        customer_id = self.kwargs['pk']
+        qs = qs.filter(customer__id = customer_id)
+        return qs
+        
+
 
 
 class ProductRatingViewSet(viewsets.ModelViewSet):
@@ -448,9 +483,6 @@ def remove_from_wishlist(request):
 
 
 
-
-from django.views.decorators.csrf import csrf_exempt
-from rest_framework.decorators import api_view
 # Payment using Sslcommerz
 
 base_url = 'http://127.0.0.1:8000'
