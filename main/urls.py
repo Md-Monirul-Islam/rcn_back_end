@@ -13,6 +13,10 @@ urlpatterns = [
 
     path('vendors/<int:pk>/',views.VendorDetails.as_view(),name='vendor_details'),
 
+    path('vendor-register/',views.vendor_register,name='vendor_register'),
+
+    path('vendor-login/',views.vendor_login,name='vendor_login'),
+
     ######## Product ########
     path('products/',views.ProductList.as_view(),name='product-list'),
 
@@ -66,6 +70,8 @@ urlpatterns = [
     path('customer/<int:pk>/wishitems/',views.Wish_Items.as_view(),name='wishitems'),
 
     path('remove-from-wishlist/', views.remove_from_wishlist, name='remove_from_wishlist'),
+
+    path('customer-dashboard/<int:pk>/',views.customer_dashboard,name='customer_dashboard'),
 
 
 

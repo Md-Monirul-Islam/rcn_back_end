@@ -6,7 +6,7 @@ class VendorSerializer(serializers.ModelSerializer):
     class Meta:
         model = Vendor
         fields = ['id', 'user', 'address']
-        # depth = 1
+        depth = 1
 
 class VendorDetailSerializer(serializers.ModelSerializer):
     class Meta:

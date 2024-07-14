@@ -29,6 +29,81 @@ class VendorDetails(generics.RetrieveUpdateDestroyAPIView):
     queryset = Vendor.objects.all()
     serializer_class = VendorDetailSerializer
 
+
+
+@csrf_exempt
+def vendor_register(request):
+    first_name = request.POST.get('first_name')
+    last_name = request.POST.get('last_name')
+    username = request.POST.get('username')
+    email = request.POST.get('email')
+    phone = request.POST.get('phone')
+    address = request.POST.get('address')
+    password = request.POST.get('password')
+    hashed_password = make_password(password)
+    try:
+        user = User.objects.create(
+            first_name=first_name,
+            last_name=last_name,
+            username=username,
+            email=email,
+            password=hashed_password
+        )
+               
+        if user:
+            try:
+                #Create customer
+                vendor = Vendor.objects.create(
+                    user=user,
+                    phone=phone,
+                    address=address,
+                )
+                msg = {
+                'bool': True,
+                'user': user.id,
+                'vendor': vendor.id,
+                'msg':'Thanks for your registration. Now you can login.'
+                }
+            except IntegrityError:
+                msg = {
+                'bool':False,
+                'msg':"Phone already exist !!"
+            }
+        
+        else:
+            msg = {
+                'bool':False,
+                'msg':'Oops... Somethings went Wrong !!'
+            }
+    except IntegrityError:
+        msg = {
+            'bool':False,
+            'msg':"Username already exist !!"
+        }
+    return JsonResponse(msg)
+
+
+
+@csrf_exempt
+def vendor_login(request):
+    username = request.POST.get('username')
+    password = request.POST.get('password')
+    user = authenticate(username=username,password=password)
+    if user:
+        vendor = Vendor.objects.get(user=user)
+        msg = {
+        'bool': True,
+        'user': user.username,
+        'id': vendor.id
+        }
+    else:
+        msg = {
+            'bool':False,
+            'msg':'Invalid username or password !!'
+        }
+    return JsonResponse(msg)
+
+
     
 
 class ProductList(generics.ListCreateAPIView):
@@ -391,6 +466,22 @@ def make_default_address(request, pk):
             msg = {'bool': bool(response)}
             return JsonResponse(msg)
     return JsonResponse({'bool': False})
+
+
+
+def customer_dashboard(request, pk):
+    customer_id = pk
+    # print(customer_id)
+    totalAddress = CustomerAddress.objects.filter(customer__id=customer_id).count()
+    totalOrder = Order.objects.filter(customer__id=customer_id).count()
+    totalWishList = WishList.objects.filter(customer__id=customer_id).count()
+    
+    context = {
+        'totalOrder': totalOrder,
+        'totalWishList': totalWishList,
+        'totalAddress': totalAddress,
+    }
+    return JsonResponse(context)
         
 
 
