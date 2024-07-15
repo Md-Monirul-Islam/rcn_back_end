@@ -125,6 +125,12 @@ class ProductList(generics.ListCreateAPIView):
     
 
 
+class ProductImgsList(generics.ListCreateAPIView):
+    queryset = ProductImage.objects.all()
+    serializer_class = ProductImageSerializer
+    
+
+
 
 class ProductDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Product.objects.all()

@@ -26,6 +26,8 @@ urlpatterns = [
 
     path('related-products/<int:pk>/',views.RelatedProductList.as_view(),name='related_product'),
 
+    path('product-imgs/',views.ProductImgsList.as_view(),name='product_image_list'),
+
     ######## Product Category ########
     path('categories/',views.CategoryList.as_view(),name='categories'),
     
