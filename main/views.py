@@ -107,7 +107,7 @@ def vendor_login(request):
     
 
 class ProductList(generics.ListCreateAPIView):
-    queryset = Product.objects.all()
+    queryset = Product.objects.all().order_by('-id')
     serializer_class = ProductListSerializer
     pagination_class = CustomPagination
 

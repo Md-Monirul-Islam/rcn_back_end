@@ -38,6 +38,7 @@ class Product(models.Model):
     demo_url = models.URLField(null=True,blank=True)
     product_file = models.FileField(upload_to='product_files/',null=True)
     downloads = models.IntegerField(null=True,default=0)
+    publish_status = models.BooleanField(default=False)
     def __str__(self):
         return self.title
     
