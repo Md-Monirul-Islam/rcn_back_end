@@ -28,6 +28,8 @@ urlpatterns = [
 
     path('product-imgs/',views.ProductImgsList.as_view(),name='product_image_list'),
 
+    path('product-imgs/<int:product_id>/',views.ProductImgsDetail.as_view(),name='product_imgs'),
+
     ######## Product Category ########
     path('categories/',views.CategoryList.as_view(),name='categories'),
     
