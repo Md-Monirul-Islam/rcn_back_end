@@ -30,6 +30,8 @@ urlpatterns = [
 
     path('product-imgs/<int:product_id>/',views.ProductImgsDetail.as_view(),name='product_imgs'),
 
+    path('product-img-delete/<int:pk>/',views.DeleteProductImgDetail.as_view(),name='product_imgs_delete'),
+
     ######## Product Category ########
     path('categories/',views.CategoryList.as_view(),name='categories'),
     

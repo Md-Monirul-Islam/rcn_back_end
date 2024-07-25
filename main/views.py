@@ -143,6 +143,13 @@ class ProductImgsDetail(generics.ListCreateAPIView):
     
 
 
+class DeleteProductImgDetail(generics.RetrieveUpdateDestroyAPIView):
+    queryset = ProductImage.objects.all()
+    serializer_class = ProductImageSerializer
+
+    
+
+
 
 class ProductDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Product.objects.all()
