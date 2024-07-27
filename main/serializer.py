@@ -19,17 +19,23 @@ class ProductListSerializer(serializers.ModelSerializer):
     product_ratings = serializers.StringRelatedField(many=True, read_only=True)
     class Meta:
         model = Product
-        fields = ['id','category','vendor','title','slug','tags','detail','price','usd_price','product_ratings','image','product_file','downloads','publish_status','product_image']
+        fields = ['id','category','vendor','title','slug','tags','detail','price','usd_price','demo_url','product_ratings','image','product_file','downloads','publish_status','product_image']
 
         def __init__(self,*args, **kwargs):
             super(ProductListSerializer,self).__init__(*args, **kwargs)
         # depth = 1
 
 
+class ProductImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductImage
+        fields = ['id','product','image']
+
+
 
 class ProductDetailSerializer(serializers.ModelSerializer):
     product_ratings = serializers.StringRelatedField(many=True, read_only=True)
-    product_image = serializers.StringRelatedField(many=True, read_only=True)
+    product_image = ProductImageSerializer(many=True, read_only=True)
     class Meta:
         model = Product
         fields = ['id','category','vendor','title','slug','tags','detail','price','usd_price','product_ratings','product_image','demo_url','image','product_file','downloads','publish_status']
@@ -40,10 +46,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
 
 
 
-class ProductImageSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ProductImage
-        fields = ['id','product','image']
+
 
 class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=False)
