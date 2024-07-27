@@ -16,6 +16,8 @@ from rest_framework import status
 from django.contrib.auth import logout
 from rest_framework.decorators import api_view
 from django.views.decorators.csrf import csrf_exempt
+from rest_framework.permissions import IsAuthenticated
+from django.shortcuts import get_object_or_404
 
 # Create your views here.
 
@@ -106,23 +108,50 @@ def vendor_login(request):
 
     
 
+# class ProductList(generics.ListCreateAPIView):
+#     queryset = Product.objects.all().order_by('-id')
+#     serializer_class = ProductListSerializer
+#     pagination_class = CustomPagination
+
+#     def get_queryset(self):
+#         qs = super().get_queryset()
+#         category_id = self.request.GET.get('category')
+#         if category_id:
+#             category = ProductCategory.objects.get(id=category_id)
+#             qs = qs.filter(category=category)
+        
+#         if 'fetch_limit' in self.request.GET:
+#             limit = self.request.GET['fetch_limit']
+#             qs = qs[:int(limit)]
+#         return qs
+    
+
 class ProductList(generics.ListCreateAPIView):
     queryset = Product.objects.all().order_by('-id')
     serializer_class = ProductListSerializer
     pagination_class = CustomPagination
+    # permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         qs = super().get_queryset()
+        user = self.request.user
+        
+        # Get the Vendor instance related to the user
+        vendor = get_object_or_404(Vendor, user=user)
+        
         category_id = self.request.GET.get('category')
         if category_id:
             category = ProductCategory.objects.get(id=category_id)
             qs = qs.filter(category=category)
         
+        # Filter products by the logged-in vendor
+        qs = qs.filter(vendor=vendor)
+
         if 'fetch_limit' in self.request.GET:
             limit = self.request.GET['fetch_limit']
             qs = qs[:int(limit)]
         return qs
-    
+
 
 
 class ProductImgsList(generics.ListCreateAPIView):
