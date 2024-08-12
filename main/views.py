@@ -471,6 +471,21 @@ class VendorOrderItemsList(generics.ListAPIView):
         vendor_id = self.kwargs['pk']
         qs = qs.filter(product__vendor__id=vendor_id)
         return qs
+    
+
+
+#Vendor customer list
+class VendorCustomerList(generics.ListAPIView):
+    queryset = OrderItems.objects.all()
+    serializer_class = OrderItemSerializer
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        vendor_id = self.kwargs['pk']
+        qs = qs.filter(product__vendor__id=vendor_id)
+        return qs
+    
+
 
 class OrderItemDetailS(generics.RetrieveUpdateDestroyAPIView):
     queryset = OrderItems.objects.all()

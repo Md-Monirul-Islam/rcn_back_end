@@ -92,11 +92,13 @@ class CustomerDetails(generics.RetrieveUpdateDestroyAPIView):
 
 
 class OrderSerializer(serializers.ModelSerializer):
-    # customer = CustomerSerializer()
+    customer = CustomerSerializer()
     class Meta:
         model = Order
         fields = '__all__'
-        # depth = 1
+        depth = 1
+        # def __intit__(self,*args, **kwargs):
+        #     super(OrderSerializer,self).__init__(*args, **kwargs)
 
 
 class OrderDetailSerializer(serializers.ModelSerializer):
@@ -120,6 +122,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
         response['order'] = OrderSerializer(instance.order, context=self.context).data
         response['product'] = ProductDetailSerializer(instance.product, context=self.context).data
         return response
+    
 
 
 class CustomerAddressSerializer(serializers.ModelSerializer):
