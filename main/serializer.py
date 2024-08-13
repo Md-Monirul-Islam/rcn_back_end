@@ -97,8 +97,20 @@ class OrderSerializer(serializers.ModelSerializer):
         model = Order
         fields = '__all__'
         # depth = 1
-        # def __intit__(self,*args, **kwargs):
+        # def __init__(self,*args, **kwargs):
         #     super(OrderSerializer,self).__init__(*args, **kwargs)
+        #     self.Meta.depth=1
+
+    def to_representation(self, instance):
+        response = super().to_representation(instance)
+        # Add customer details from the related User model
+        response['customer'] = {
+            'first_name': instance.customer.user.first_name,
+            'last_name': instance.customer.user.last_name,
+            'email': instance.customer.user.email,
+            'phone': instance.customer.phone,
+        }
+        return response
 
 
 class OrderDetailSerializer(serializers.ModelSerializer):
@@ -121,6 +133,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
         response = super().to_representation(instance)
         response['order'] = OrderSerializer(instance.order, context=self.context).data
         response['product'] = ProductDetailSerializer(instance.product, context=self.context).data
+
         return response
     
 
