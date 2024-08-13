@@ -92,11 +92,11 @@ class CustomerDetails(generics.RetrieveUpdateDestroyAPIView):
 
 
 class OrderSerializer(serializers.ModelSerializer):
-    customer = CustomerSerializer()
+    # customer = CustomerSerializer()
     class Meta:
         model = Order
         fields = '__all__'
-        depth = 1
+        # depth = 1
         # def __intit__(self,*args, **kwargs):
         #     super(OrderSerializer,self).__init__(*args, **kwargs)
 
