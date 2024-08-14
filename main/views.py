@@ -449,7 +449,7 @@ class OrderDetails(generics.ListAPIView):
 
 
 
-
+#Customer order item list
 class CustomerOrderItemsList(generics.ListAPIView):
     queryset = OrderItems.objects.all()
     serializer_class = OrderItemSerializer
@@ -484,6 +484,37 @@ class VendorCustomerList(generics.ListAPIView):
         vendor_id = self.kwargs['pk']
         qs = qs.filter(product__vendor__id=vendor_id)
         return qs
+    
+
+
+# class VendorCustomerOrderItemList(generics.ListAPIView):
+#     queryset = OrderItems.objects.all()
+#     serializer_class = OrderItemSerializer
+
+#     def get_queryset(self):
+#         qs = super().get_queryset()
+#         vendor_id = self.kwargs['vendor_id']
+#         customer_id = self.kwargs['customer_id']
+#         qs = qs.filter(product__vendor__id=vendor_id,order__customer__id=customer_id)
+#         return qs
+
+
+class VendorCustomerOrderItemList(generics.ListAPIView):
+    serializer_class = OrderItemSerializer
+
+    def get_queryset(self):
+        vendor_id = self.kwargs['vendor_id']
+        customer_id = self.kwargs.get('customer_id')  # Use get() to handle missing customer_id
+
+        if customer_id:
+            queryset = OrderItems.objects.filter(
+                product__vendor__id=vendor_id,
+                order__customer__id=customer_id
+            )
+        else:
+            queryset = OrderItems.objects.none()  # Or raise a custom exception
+
+        return queryset
     
 
 
