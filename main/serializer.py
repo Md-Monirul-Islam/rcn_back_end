@@ -105,6 +105,7 @@ class OrderSerializer(serializers.ModelSerializer):
         response = super().to_representation(instance)
         # Add customer details from the related User model
         response['customer'] = {
+            'customer_id': instance.customer.user.id,
             'first_name': instance.customer.user.first_name,
             'last_name': instance.customer.user.last_name,
             'email': instance.customer.user.email,
