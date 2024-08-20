@@ -532,6 +532,7 @@ class OrderModify(generics.RetrieveUpdateAPIView):
 
 
 #order delete
+@csrf_exempt
 def delete_customer_orders(request, customer_id):
     if request.method in ["DELETE", "GET"]:
         # Delete orders for the specified customer
