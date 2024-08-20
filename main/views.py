@@ -4,7 +4,7 @@ import requests
 from rest_framework.response import Response
 from rest_framework import generics,permissions,viewsets
 from django.views.decorators.csrf import csrf_exempt
-from django.http import JsonResponse,HttpRequest
+from django.http import HttpResponseNotAllowed, JsonResponse,HttpRequest
 from django.contrib.auth import authenticate
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import User
@@ -487,34 +487,34 @@ class VendorCustomerList(generics.ListAPIView):
     
 
 
-# class VendorCustomerOrderItemList(generics.ListAPIView):
-#     queryset = OrderItems.objects.all()
-#     serializer_class = OrderItemSerializer
-
-#     def get_queryset(self):
-#         qs = super().get_queryset()
-#         vendor_id = self.kwargs['vendor_id']
-#         customer_id = self.kwargs['customer_id']
-#         qs = qs.filter(product__vendor__id=vendor_id,order__customer__id=customer_id)
-#         return qs
-
-
 class VendorCustomerOrderItemList(generics.ListAPIView):
+    queryset = OrderItems.objects.all()
     serializer_class = OrderItemSerializer
 
     def get_queryset(self):
+        qs = super().get_queryset()
         vendor_id = self.kwargs['vendor_id']
-        customer_id = self.kwargs.get('customer_id')  # Use get() to handle missing customer_id
+        customer_id = self.kwargs['customer_id']
+        qs = qs.filter(product__vendor__id=vendor_id,order__customer__id=customer_id)
+        return qs
 
-        if customer_id:
-            queryset = OrderItems.objects.filter(
-                product__vendor__id=vendor_id,
-                order__customer__id=customer_id
-            )
-        else:
-            queryset = OrderItems.objects.none()  # Or raise a custom exception
 
-        return queryset
+# class VendorCustomerOrderItemList(generics.ListAPIView):
+#     serializer_class = OrderItemSerializer
+
+#     def get_queryset(self):
+#         vendor_id = self.kwargs['vendor_id']
+#         customer_id = self.kwargs.get('customer_id')  # Use get() to handle missing customer_id
+
+#         if customer_id:
+#             queryset = OrderItems.objects.filter(
+#                 product__vendor__id=vendor_id,
+#                 order__customer__id=customer_id
+#             )
+#         else:
+#             queryset = OrderItems.objects.none()  # Or raise a custom exception
+
+#         return queryset
     
 
 
@@ -528,6 +528,20 @@ class OrderItemDetailS(generics.RetrieveUpdateDestroyAPIView):
 class OrderModify(generics.RetrieveUpdateAPIView):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
+
+
+
+#order delete
+def delete_customer_orders(request, customer_id):
+    if request.method in ["DELETE", "GET"]:
+        # Delete orders for the specified customer
+        orders = Order.objects.filter(customer__id=customer_id).delete()
+        msg = {'bool': bool(orders[0])}  # orders[0] gives the count of deleted objects
+        return JsonResponse(msg)
+    
+    else:
+        # Respond with 405 Method Not Allowed for other request methods
+        return HttpResponseNotAllowed(['DELETE', 'GET'])
 
 
 

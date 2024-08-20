@@ -40,6 +40,8 @@ urlpatterns = [
 
     path('order-modify/<int:pk>/',views.OrderModify.as_view(),name='order_modify'),
 
+    path('delete-customer-orders/<int:customer_id>/',views.delete_customer_orders,name='order_delete'),
+
     ######## Product Category ########
     path('categories/',views.CategoryList.as_view(),name='categories'),
     
