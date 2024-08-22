@@ -1,3 +1,4 @@
+import datetime
 from rest_framework import serializers, generics
 from django.contrib.auth.models import User
 from .models import Product, ProductCategory, ProductImage, Transaction, Vendor,Customer,Order,OrderItems,CustomerAddress, ProductRating, WishList
@@ -202,6 +203,35 @@ class WishListSerializer(serializers.ModelSerializer):
 
 
 #Vendor report serializer
+# class VendorDailyReportSerializer(serializers.Serializer):
+#     order_date = serializers.DateField(source='order__order_time__date')
+#     total_orders = serializers.IntegerField()
+
+
+
+# class VendorDailyReportSerializer(serializers.Serializer):
+#     date = serializers.DateField(required=False)
+#     month = serializers.DateField(required=False)
+#     year = serializers.DateField(required=False)
+#     total_orders = serializers.IntegerField()
+
+
+#date,month and year wise
 class VendorDailyReportSerializer(serializers.Serializer):
-    order_date = serializers.DateField(source='order__order_time__date')
+    date = serializers.DateField(required=False, allow_null=True)
+    month = serializers.DateField(required=False, allow_null=True)
+    year = serializers.DateField(required=False, allow_null=True)
     total_orders = serializers.IntegerField()
+
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+
+        # Clean up empty fields
+        if not ret.get('date'):
+            ret.pop('date', None)
+        if not ret.get('month'):
+            ret.pop('month', None)
+        if not ret.get('year'):
+            ret.pop('year', None)
+
+        return ret

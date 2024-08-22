@@ -1,4 +1,5 @@
 from uuid import uuid4
+from django.db.models import DateField
 from django.shortcuts import redirect, render
 import requests
 from rest_framework.response import Response
@@ -20,6 +21,7 @@ from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
 from rest_framework.exceptions import NotAuthenticated
 from django.db.models import Count
+from django.db.models.functions import TruncDate, TruncMonth, TruncYear
 
 # Create your views here.
 
@@ -636,29 +638,65 @@ def vendor_dashboard(request, pk):
 
 
 #Vendor daily reports
+#only for date wise
 # class VendorDailyReport(generics.ListAPIView):
-#     queryset = OrderItems.objects.all()
-#     serializer_class = OrderItemSerializer
+#     serializer_class = VendorDailyReportSerializer
+#     # queryset = OrderItems.objects.all()
 
 #     def get_queryset(self):
+#         # qs = super().get_queryset()
 #         vendor_id = self.kwargs['pk']
-#         # Filtering and annotating the queryset
-#         return super().get_queryset().filter(product__vendor__id=vendor_id)\
-#             .annotate(order_count=Count('id'))
+#         # Adjusting the annotation to use 'total_orders' instead of 'id__count'
+#         qs = OrderItems.objects.filter(product__vendor__id=vendor_id).values('order__order_time__date').annotate(total_orders=Count('id'))
+#         return qs
+    
+
+
+#date,month and year wise
+class VendorDailyReport(generics.ListAPIView):
+    serializer_class = VendorDailyReportSerializer
+
+    def get_queryset(self):
+        vendor_id = self.kwargs['pk']
+        time_frame = self.request.query_params.get('time_frame', 'daily')
+
+        if time_frame == 'monthly':
+            qs = OrderItems.objects.filter(product__vendor__id=vendor_id).annotate(
+                month=TruncMonth('order__order_time')
+            ).values(
+                month=TruncMonth('order__order_time', output_field=DateField())
+            ).annotate(total_orders=Count('id')).order_by('month')
+        elif time_frame == 'yearly':
+            qs = OrderItems.objects.filter(product__vendor__id=vendor_id).annotate(
+                year=TruncYear('order__order_time')
+            ).values(
+                year=TruncYear('order__order_time', output_field=DateField())
+            ).annotate(total_orders=Count('id')).order_by('year')
+        else:  # Default to daily
+            qs = OrderItems.objects.filter(product__vendor__id=vendor_id).annotate(
+                date=TruncDate('order__order_time')
+            ).values(
+                date=TruncDate('order__order_time', output_field=DateField())
+            ).annotate(total_orders=Count('id')).order_by('date')
+        
+        return qs
+
+
+
         
 
 
 #Vendor daily reports /// this code properly work without @property in model of OrderItems
-class VendorDailyReport(generics.ListAPIView):
-    serializer_class = VendorDailyReportSerializer
-    # queryset = OrderItems.objects.all()
+# class VendorDailyReport(generics.ListAPIView):
+#     serializer_class = VendorDailyReportSerializer
+#     # queryset = OrderItems.objects.all()
 
-    def get_queryset(self):
-        # qs = super().get_queryset()
-        vendor_id = self.kwargs['pk']
-        # Adjusting the annotation to use 'total_orders' instead of 'id__count'
-        qs = OrderItems.objects.filter(product__vendor__id=vendor_id).values('order__order_time__date').annotate(total_orders=Count('id'))
-        return qs
+#     def get_queryset(self):
+#         # qs = super().get_queryset()
+#         vendor_id = self.kwargs['pk']
+#         # Adjusting the annotation to use 'total_orders' instead of 'id__count'
+#         qs = OrderItems.objects.filter(product__vendor__id=vendor_id).values('order__order_time__date').annotate(total_orders=Count('id'))
+#         return qs
 
 
 class ProductRatingViewSet(viewsets.ModelViewSet):
