@@ -1,6 +1,7 @@
 from django.utils import timezone
 from django.db import models
 from django.contrib.auth.models import User
+from django.db.models import Count
 
 # Create your models here.
 class Vendor(models.Model):
@@ -79,8 +80,23 @@ class OrderItems(models.Model):
     def __str__(self):
         return self.product.title
     
-    class Meta:
-        verbose_name_plural = 'Order Items'
+    # @property
+    # def show_daily_order_report_chart(self):
+    #     orders = OrderItems.objects.filter(product__vendor=self).values('order__order_time__date').annotate(Count('id'))
+    #     dateList = []
+    #     countList = []
+    #     dataSet = {}
+    #     if orders:
+    #         for order in orders:
+    #             dateList.append(order['order__order_time__date'])
+    #             countList.append(order['id__count'])
+    #             print('Orders--------->>',order)
+            
+    #         dataSet = {'dates':dateList,'data':countList}
+    #     return dataSet
+    
+    # class Meta:
+    #     verbose_name_plural = 'Order Items'
 
 
 class CustomerAddress(models.Model):

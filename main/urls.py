@@ -23,6 +23,10 @@ urlpatterns = [
 
     path('vendor/<int:vendor_id>/customer/<int:customer_id>/order-items/',views.VendorCustomerOrderItemList.as_view(),name="vendor's_customer_order_list"),
 
+    path('vendor/<int:pk>/dashboard/',views.vendor_dashboard,name='vendor_dashboard'),
+
+    path('vendor/<int:pk>/seller-daily-report/',views.VendorDailyReport.as_view(),name='seller_daily_report'),
+
     ######## Product ########
     path('products/',views.ProductList.as_view(),name='product-list'),
 

@@ -125,9 +125,11 @@ class OrderDetailSerializer(serializers.ModelSerializer):
 class OrderItemSerializer(serializers.ModelSerializer):
     # order = OrderSerializer()
     # product = ProductDetailSerializer()
+    # order_count = serializers.IntegerField(read_only=True)
     class Meta:
         model = OrderItems
         fields = '__all__'
+        # fields = ['order', 'product', 'quantity', 'price', 'order_count']
         # depth = 1
 
     def to_representation(self, instance):
@@ -197,3 +199,9 @@ class WishListSerializer(serializers.ModelSerializer):
         class Meta:
             model = Transaction,
             fields = '__all__',
+
+
+#Vendor report serializer
+class VendorDailyReportSerializer(serializers.Serializer):
+    order_date = serializers.DateField(source='order__order_time__date')
+    total_orders = serializers.IntegerField()

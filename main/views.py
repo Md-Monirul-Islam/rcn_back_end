@@ -19,6 +19,7 @@ from django.views.decorators.csrf import csrf_exempt
 from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
 from rest_framework.exceptions import NotAuthenticated
+from django.db.models import Count
 
 # Create your views here.
 
@@ -613,8 +614,51 @@ def customer_dashboard(request, pk):
         'totalAddress': totalAddress,
     }
     return JsonResponse(context)
+
+
+
+#Vendor dashboard
+def vendor_dashboard(request, pk):
+    vendor_id = pk
+    # print(vendor_id)
+    totalProducts = Product.objects.filter(vendor__id=vendor_id).count()
+    totalOrders = OrderItems.objects.filter(product__vendor__id=vendor_id).count()
+    # totalCustomers = OrderItems.objects.filter(product__vendor__id=vendor_id).values('order__customer').count()
+    totalCustomers = OrderItems.objects.filter(product__vendor__id=vendor_id).values('order__customer').distinct().count()
+    
+    context = {
+        'totalOrders': totalOrders,
+        'totalCustomers': totalCustomers,
+        'totalProducts': totalProducts,
+    }
+    return JsonResponse(context)
+
+
+
+#Vendor daily reports
+# class VendorDailyReport(generics.ListAPIView):
+#     queryset = OrderItems.objects.all()
+#     serializer_class = OrderItemSerializer
+
+#     def get_queryset(self):
+#         vendor_id = self.kwargs['pk']
+#         # Filtering and annotating the queryset
+#         return super().get_queryset().filter(product__vendor__id=vendor_id)\
+#             .annotate(order_count=Count('id'))
         
 
+
+#Vendor daily reports /// this code properly work without @property in model of OrderItems
+class VendorDailyReport(generics.ListAPIView):
+    serializer_class = VendorDailyReportSerializer
+    # queryset = OrderItems.objects.all()
+
+    def get_queryset(self):
+        # qs = super().get_queryset()
+        vendor_id = self.kwargs['pk']
+        # Adjusting the annotation to use 'total_orders' instead of 'id__count'
+        qs = OrderItems.objects.filter(product__vendor__id=vendor_id).values('order__order_time__date').annotate(total_orders=Count('id'))
+        return qs
 
 
 class ProductRatingViewSet(viewsets.ModelViewSet):
