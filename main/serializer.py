@@ -3,17 +3,70 @@ from rest_framework import serializers, generics
 from django.contrib.auth.models import User
 from .models import Product, ProductCategory, ProductImage, Transaction, Vendor,Customer,Order,OrderItems,CustomerAddress, ProductRating, WishList
 
+
+
+
+class UserSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True, required=False)
+
+    class Meta:
+        model = User
+        fields = ['id', 'first_name', 'last_name', 'username', 'email', 'password']
+
+# class UserSerializer(serializers.ModelSerializer):
+#     password = serializers.CharField(write_only=True, required=False)
+
+#     class Meta:
+#         model = User
+#         fields = ['id', 'first_name', 'last_name', 'username', 'email', 'password']
+
+
+
 class VendorSerializer(serializers.ModelSerializer):
     class Meta:
         model = Vendor
         fields = ['id', 'user', 'address']
         depth = 1
 
+
 class VendorDetailSerializer(serializers.ModelSerializer):
+    user = UserSerializer()
+
     class Meta:
         model = Vendor
-        fields = ['id', 'user', 'address']
-        # depth = 1
+        fields = ['id', 'user', 'address', 'phone', 'profile_image']
+
+    def update(self, instance, validated_data):
+        # Extract user data from validated_data
+        user_data = validated_data.pop('user', None)
+        
+        # Update vendor fields
+        instance.phone = validated_data.get('phone', instance.phone)
+        instance.address = validated_data.get('address', instance.address)
+        if 'profile_image' in validated_data:
+            instance.profile_image = validated_data.get('profile_image', instance.profile_image)
+        instance.save()
+
+        # Update user fields if user data is provided
+        if user_data:
+            user = instance.user
+
+            # Check if the username needs to be updated
+            new_username = user_data.get('username')
+            if new_username and new_username != user.username:
+                # Check if the new username already exists
+                if User.objects.filter(username=new_username).exists():
+                    raise serializers.ValidationError({"username": "A user with that username already exists."})
+                user.username = new_username
+
+            user.first_name = user_data.get('first_name', user.first_name)
+            user.last_name = user_data.get('last_name', user.last_name)
+            user.email = user_data.get('email', user.email)
+            if 'password' in user_data:
+                user.set_password(user_data['password'])  # Update password if provided
+            user.save()
+
+        return instance
 
 
 class ProductListSerializer(serializers.ModelSerializer):
@@ -47,21 +100,6 @@ class ProductDetailSerializer(serializers.ModelSerializer):
 
 
 
-
-
-class UserSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True, required=False)
-
-    class Meta:
-        model = User
-        fields = ['id', 'first_name', 'last_name', 'username', 'email', 'password']
-
-class UserSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True, required=False)
-
-    class Meta:
-        model = User
-        fields = ['id', 'first_name', 'last_name', 'username', 'email', 'password']
 
 class CustomerSerializer(serializers.ModelSerializer):
     user = UserSerializer()
