@@ -110,6 +110,17 @@ def vendor_login(request):
     return JsonResponse(msg)
 
 
+
+@csrf_exempt
+def vendor_change_password(request,vendor_id):
+    password = request.POST.get('password')
+    vendor = Vendor.objects.get(id=vendor_id)
+    user = vendor.user
+    user.password = make_password(password)
+    user.save()
+    msg = {'bool':True,'msg':'Password has been changed'}
+    return JsonResponse(msg)
+
     
 
 class ProductList(generics.ListCreateAPIView):
