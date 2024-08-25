@@ -724,7 +724,7 @@ class VendorDailyReport(generics.ListAPIView):
 
 
 class ProductRatingViewSet(viewsets.ModelViewSet):
-    serializer_class = ProiductReviewSerializer
+    serializer_class = ProductReviewSerializer
     queryset = ProductRating.objects.all()
 
 

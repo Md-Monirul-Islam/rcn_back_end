@@ -194,11 +194,19 @@ class CustomerAddressSerializer(serializers.ModelSerializer):
 
 
 
-class ProiductReviewSerializer(serializers.ModelSerializer):
+class ProductReviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductRating
-        fields = '__all__'
-        depth = 1
+        fields = ['id', 'customer', 'product', 'rating', 'reviews', 'add_time']
+
+    def __init__(self, *args, **kwargs):
+        super(ProductReviewSerializer, self).__init__(*args, **kwargs)
+        if self.context.get('view').action in ['list', 'retrieve']:
+            self.Meta.depth = 1
+        else:
+            self.Meta.depth = 0
+
+        
 
 
 
