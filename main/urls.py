@@ -95,6 +95,8 @@ urlpatterns = [
 
     path('customer-dashboard/<int:pk>/',views.customer_dashboard,name='customer_dashboard'),
 
+    path("customer-change-password/<int:customer_id>/",views.customer_change_password, name="customer_change_password"),
+
 
 
     path('initiate/', views.initiate_payment, name='initiate_payment'),

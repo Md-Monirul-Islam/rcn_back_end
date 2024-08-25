@@ -238,6 +238,19 @@ def CustomerLogin(request):
 
 
 
+@csrf_exempt
+def customer_change_password(request,customer_id):
+    password = request.POST.get('password')
+    customer = Customer.objects.get(id=customer_id)
+    user = customer.user
+    user.password = make_password(password)
+    user.save()
+    msg = {'bool':True,'msg':'Password has been changed'}
+    return JsonResponse(msg)
+
+
+
+
 
 @csrf_exempt
 def CustomerRegister(request):
