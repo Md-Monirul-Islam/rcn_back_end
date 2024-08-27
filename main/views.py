@@ -22,6 +22,7 @@ from django.shortcuts import get_object_or_404
 from rest_framework.exceptions import NotAuthenticated
 from django.db.models import Count
 from django.db.models.functions import TruncDate, TruncMonth, TruncYear
+from django.db.models import OuterRef, Subquery
 
 # Create your views here.
 
@@ -502,15 +503,32 @@ class VendorOrderItemsList(generics.ListAPIView):
 
 
 #Vendor customer list
+# class VendorCustomerList(generics.ListAPIView):
+#     queryset = OrderItems.objects.all()
+#     serializer_class = OrderItemSerializer
+
+#     def get_queryset(self):
+#         qs = super().get_queryset()
+#         vendor_id = self.kwargs['pk']
+#         qs = qs.filter(product__vendor__id=vendor_id)
+#         return qs
+
+
 class VendorCustomerList(generics.ListAPIView):
-    queryset = OrderItems.objects.all()
-    serializer_class = OrderItemSerializer
+    serializer_class = CustomerSerializer
 
     def get_queryset(self):
-        qs = super().get_queryset()
         vendor_id = self.kwargs['pk']
-        qs = qs.filter(product__vendor__id=vendor_id)
-        return qs
+        
+        # Subquery to get distinct customer IDs
+        subquery = OrderItems.objects.filter(product__vendor__id=vendor_id,order__customer=OuterRef('pk')).values('order__customer').distinct()
+
+        # Get unique customers related to the vendor's products
+        customers = Customer.objects.filter(id__in=Subquery(subquery)).distinct()
+        
+        return customers
+
+
     
 
 
