@@ -206,6 +206,11 @@ class ProductReviewSerializer(serializers.ModelSerializer):
         else:
             self.Meta.depth = 0
 
+    def to_representation(self, instance):
+        response = super().to_representation(instance)
+        response['customer'] = CustomerSerializer(instance.customer, context=self.context).data
+        return response
+
         
 
 
