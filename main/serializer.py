@@ -26,7 +26,12 @@ class VendorSerializer(serializers.ModelSerializer):
     class Meta:
         model = Vendor
         fields = ['id', 'user', 'address','phone','profile_image']
-        depth = 1
+        # depth = 1
+    
+    def to_representation(self, instance):
+        response = super().to_representation(instance)
+        response['user'] = UserSerializer(instance.user, context=self.context).data
+        return response
 
 
 class VendorDetailSerializer(serializers.ModelSerializer):
