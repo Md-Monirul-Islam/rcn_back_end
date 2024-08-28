@@ -29,6 +29,8 @@ urlpatterns = [
 
     path("vendor-change-password/<int:vendor_id>/",views.vendor_change_password, name="vendor_change_password"),
 
+    path('vendor/<int:vendor_id>/products/', views.VendorProductsView.as_view(), name='vendor-products'),
+
     ######## Product ########
     path('products/',views.ProductList.as_view(),name='product-list'),
 

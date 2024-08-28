@@ -38,6 +38,16 @@ class VendorDetails(generics.RetrieveUpdateDestroyAPIView):
 
 
 
+class VendorProductsView(generics.ListAPIView):
+    serializer_class = ProductListSerializer
+
+    def get_queryset(self):
+        vendor_id = self.kwargs['vendor_id']
+        qs = Product.objects.filter(vendor_id=vendor_id)
+        return qs
+
+
+
 @csrf_exempt
 def vendor_register(request):
     first_name = request.POST.get('first_name')
@@ -852,7 +862,6 @@ base_url = 'http://127.0.0.1:8000'
 def initiate_payment(request):
     if request.method == 'POST':
         post_data = request.data
-        print(post_data)
         order_id = post_data.get('order_id')
         
         try:
@@ -861,15 +870,16 @@ def initiate_payment(request):
             return Response({"error": "Order does not exist"}, status=400)
         
         total_amount = post_data.get('amount')
-        
         customer = order.customer
         user = customer.user
         
+        # Fetch the default customer address
         customer_address = customer.customer_address.filter(default_address=True).first()
         
         if not customer_address:
             return Response({"error": "Default customer address does not exist"}, status=400)
-        print('Customer address founts',customer_address)
+        
+        # Set transaction ID and create a new transaction
         transaction_id = uuid4().hex
         transaction = Transaction.objects.create(
             transaction_id=transaction_id,
@@ -880,7 +890,8 @@ def initiate_payment(request):
             customer_phone=customer.phone,
             customer_postcode=customer_address.post,
         )
-
+        
+        # Prepare payment data using the customer's default address
         payment_data = {
             'store_id': 'kopot665596f0af929',
             'store_passwd': 'kopot665596f0af929@ssl',
@@ -899,21 +910,21 @@ def initiate_payment(request):
             'cus_email': transaction.customer_email,
             'cus_phone': transaction.customer_phone,
             'cus_add1': customer_address.address,
-            'cus_city': 'Dhaka',
+            'cus_city': customer_address.city,
             'cus_postcode': transaction.customer_postcode,
             'ship_name': user.get_full_name(),
-            'ship_add1': 'Dhaka',
-            'ship_add2': 'Dhaka',
-            'ship_city': 'Dhaka',
-            'ship_state': 'Dhaka',
-            'ship_postcode': 1000,
+            'ship_add1': customer_address.address,
+            'ship_city': customer_address.city,
+            'ship_state': customer_address.city,
+            'ship_postcode': customer_address.post,
             'ship_country': 'Bangladesh',
-            # Add any other required fields by SSLCommerz
         }
-        print(payment_data)
+
         response = requests.post('https://sandbox.sslcommerz.com/gwprocess/v4/api.php', data=payment_data)
         return Response(response.json())
     
+
+
 
 @api_view(['POST'])
 def payment_success(request):

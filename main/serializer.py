@@ -25,7 +25,7 @@ class UserSerializer(serializers.ModelSerializer):
 class VendorSerializer(serializers.ModelSerializer):
     class Meta:
         model = Vendor
-        fields = ['id', 'user', 'address']
+        fields = ['id', 'user', 'address','phone','profile_image']
         depth = 1
 
 
