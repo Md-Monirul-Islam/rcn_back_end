@@ -12,6 +12,11 @@ class Vendor(models.Model):
 
     def __str__(self):
         return self.user.username
+    
+    @property
+    def categories(self):
+        cats = Product.objects.filter(vendor=self,category__isnull=False).values('category__title').order_by('category__title') #.distinct('category__title') distinct will work only postgre sql
+        return cats
 
 
 
