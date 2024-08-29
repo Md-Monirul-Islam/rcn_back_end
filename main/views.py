@@ -29,6 +29,15 @@ from django.db.models import OuterRef, Subquery
 class VendorList(generics.ListCreateAPIView):
     queryset = Vendor.objects.all()
     serializer_class = VendorSerializer
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        if 'fetch_limit' in self.request.GET:
+            limit = self.request.GET['fetch_limit']
+            qs = qs.annotate(downloads=Count('product')).order_by('-downloads','-id')
+            qs = qs[:int(limit)]
+        return qs
+    
     
 
 
