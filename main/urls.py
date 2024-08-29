@@ -99,6 +99,8 @@ urlpatterns = [
 
     path("customer-change-password/<int:customer_id>/",views.customer_change_password, name="customer_change_password"),
 
+    path('sellers/<int:seller_id>/categories/<str:category_title>/products/', views.VendorCategoryProductsView.as_view(), name='seller_category_products'),
+
 
 
     path('initiate/', views.initiate_payment, name='initiate_payment'),

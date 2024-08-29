@@ -863,6 +863,19 @@ def remove_from_wishlist(request):
 
 
 
+
+class VendorCategoryProductsView(generics.ListAPIView):
+    def get(self, request, seller_id, category_title, *args, **kwargs):
+        # Filter products by seller and category
+        products = Product.objects.filter(vendor__id=seller_id, category__title=category_title)
+
+        # Serialize the data
+        serializer = ProductListSerializer(products, many=True)
+        
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+
 # Payment using Sslcommerz
 
 base_url = 'http://127.0.0.1:8000'
