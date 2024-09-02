@@ -158,6 +158,11 @@ class ProductList(generics.ListCreateAPIView):
         if 'fetch_limit' in self.request.GET:
             limit = self.request.GET['fetch_limit']
             qs = qs[:int(limit)]
+
+        if 'popular_fetch_limit' in self.request.GET:
+            limit = self.request.GET['popular_fetch_limit']
+            qs = qs.order_by('-downloads','-id')
+            qs = qs[:int(limit)]
         return qs
     
 
