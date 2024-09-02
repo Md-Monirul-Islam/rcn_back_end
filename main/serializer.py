@@ -225,7 +225,7 @@ class ProductReviewSerializer(serializers.ModelSerializer):
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductCategory
-        fields = '__all__'
+        fields = ['id','title','detail','total_downloads']
         depth = 1
 
 

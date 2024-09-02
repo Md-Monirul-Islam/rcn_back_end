@@ -1,7 +1,7 @@
 from django.utils import timezone
 from django.db import models
 from django.contrib.auth.models import User
-from django.db.models import Count
+from django.db.models import Count,Sum
 
 # Create your models here.
 class Vendor(models.Model):
@@ -15,7 +15,7 @@ class Vendor(models.Model):
     
     @property
     def categories(self):
-        cats = Product.objects.filter(vendor=self,category__isnull=False).values('category__title').order_by('category__title').distinct ()
+        cats = Product.objects.filter(vendor=self,category__isnull=False).values('category__title').order_by('category__title').distinct()
         return cats
 
 
@@ -26,6 +26,12 @@ class ProductCategory(models.Model):
 
     def __str__(self):
         return self.title
+     
+    @property
+    def total_downloads(self):
+        # Order products by downloads and id, then aggregate the sum of downloads
+        total = Product.objects.filter(category=self).order_by('-downloads', '-id').aggregate(total_downloads=Sum('downloads'))['total_downloads']
+        return total or 0  # Return 0 if total_downloads is None
     
     class Meta:
         verbose_name_plural = "Product Categories"

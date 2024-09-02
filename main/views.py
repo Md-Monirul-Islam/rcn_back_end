@@ -8,7 +8,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponseNotAllowed, JsonResponse,HttpRequest
 from django.contrib.auth import authenticate
 from django.contrib.auth.hashers import make_password
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User,Group
 from django.db import IntegrityError
 from .models import *
 from .serializer import *
@@ -144,7 +144,7 @@ def vendor_change_password(request,vendor_id):
     
 
 class ProductList(generics.ListCreateAPIView):
-    queryset = Product.objects.all().order_by('-id')
+    queryset = Product.objects.all().order_by('-downloads','-id')
     serializer_class = ProductListSerializer
     pagination_class = CustomPagination
 
@@ -327,6 +327,62 @@ def CustomerRegister(request):
     return JsonResponse(msg)
 
 
+# @csrf_exempt
+# def CustomerRegister(request):
+#     first_name = request.POST.get('first_name')
+#     last_name = request.POST.get('last_name')
+#     username = request.POST.get('username')
+#     email = request.POST.get('email')
+#     phone = request.POST.get('phone')
+#     password = request.POST.get('password')
+#     hashed_password = make_password(password)
+
+#     try:
+#         user = User.objects.create(
+#             first_name=first_name,
+#             last_name=last_name,
+#             username=username,
+#             email=email,
+#             password=hashed_password
+#         )
+        
+#         if user:
+#             try:
+#                 # Create customer
+#                 customer = Customer.objects.create(
+#                     user=user,
+#                     phone=phone,
+#                 )
+
+#                 # Assign user to the Customer_Permission group
+#                 customer_group, created = Group.objects.get_or_create(name='Customer_Permission')
+#                 user.groups.add(customer_group)
+
+#                 msg = {
+#                     'bool': True,
+#                     'user': user.id,
+#                     'customer': customer.id,
+#                     'msg': 'Thanks for your registration. Now you can login.'
+#                 }
+#             except IntegrityError:
+#                 msg = {
+#                     'bool': False,
+#                     'msg': "Phone already exists!"
+#                 }
+#         else:
+#             msg = {
+#                 'bool': False,
+#                 'msg': 'Oops... Something went wrong!'
+#             }
+#     except IntegrityError:
+#         msg = {
+#             'bool': False,
+#             'msg': "Username already exists!"
+#         }
+
+#     return JsonResponse(msg)
+
+
 # Logout
 @api_view(['POST'])
 def logout_view(request):
@@ -337,62 +393,6 @@ def logout_view(request):
     logout(request)
     return Response({"message": "Logged out successfully"}, status=status.HTTP_200_OK)
 
-
-
-# @csrf_exempt
-# def CustomerRegister(request):
-#     if request.method == 'POST':
-#         try:
-#             first_name = request.POST.get('first_name')
-#             last_name = request.POST.get('last_name')
-#             username = request.POST.get('username')
-#             email = request.POST.get('email')
-#             phone = request.POST.get('phone')
-#             password = request.POST.get('password')
-#             hashed_password = make_password(password)
-
-#             user = User.objects.create(
-#                 first_name=first_name,
-#                 last_name=last_name,
-#                 username=username,
-#                 email=email,
-#                 password=hashed_password
-#             )
-
-#             if user:
-#                 customer = Customer.objects.create(
-#                     user=user,
-#                     phone=phone,
-#                 )
-#                 msg = {
-#                     'bool': True,
-#                     'user': user.id,
-#                     'customer': customer.id,
-#                     'msg': 'Thanks for your registration. Now you can login.'
-#                 }
-#         except IntegrityError as e:
-#             if 'username' in str(e):
-#                 msg = {
-#                     'bool': False,
-#                     'msg': "Username already exists!"
-#                 }
-#             elif 'phone' in str(e):
-#                 msg = {
-#                     'bool': False,
-#                     'msg': "Phone number already exists!"
-#                 }
-#         else:
-#             msg = {
-#                 'bool': False,
-#                 'msg': 'Oops... Something went wrong!'
-#             }
-#     else:
-#         msg = {
-#             'bool': False,
-#             'msg': 'Invalid request method!'
-#         }
-
-#     return JsonResponse(msg)
 
 
 
@@ -778,6 +778,14 @@ class ProductRatingViewSet(viewsets.ModelViewSet):
 class CategoryList(generics.ListCreateAPIView):
     queryset = ProductCategory.objects.all()
     serializer_class = CategorySerializer
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        if 'category_fetch_limit' in self.request.GET:
+            limit = self.request.GET['category_fetch_limit']
+            qs = qs.annotate(downloads=Count('category_product'))
+            qs = qs[:int(limit)]
+        return qs
 
 
 class CategoryDetail(generics.RetrieveUpdateDestroyAPIView):
