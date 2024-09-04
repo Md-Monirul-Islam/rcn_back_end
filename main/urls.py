@@ -1,7 +1,7 @@
 from django.urls import path
 from .import views
 from rest_framework import routers
-from .views import CustomerAddressViewSet
+from .views import CustomerAddressViewSet, ProductSearchView
 
 router = routers.DefaultRouter()
 router.register(r'address', CustomerAddressViewSet, basename='address')
@@ -101,7 +101,7 @@ urlpatterns = [
 
     path('sellers/<int:seller_id>/categories/<str:category_title>/products/', views.VendorCategoryProductsView.as_view(), name='seller_category_products'),
 
-
+    path('search/', ProductSearchView.as_view(), name='product-search'),
 
     path('initiate/', views.initiate_payment, name='initiate_payment'),
     path('success/', views.payment_success, name='payment_success'),

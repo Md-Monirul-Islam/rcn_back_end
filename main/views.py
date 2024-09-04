@@ -23,6 +23,8 @@ from rest_framework.exceptions import NotAuthenticated
 from django.db.models import Count
 from django.db.models.functions import TruncDate, TruncMonth, TruncYear
 from django.db.models import OuterRef, Subquery
+from rest_framework.views import APIView
+from django.db.models import Q
 
 # Create your views here.
 
@@ -886,6 +888,38 @@ class VendorCategoryProductsView(generics.ListAPIView):
         serializer = ProductListSerializer(products, many=True)
         
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
+
+
+
+#search view
+# class ProductSearchView(APIView):
+#     def get(self, request, format=None):
+#         query = request.GET.get('q', '')
+#         if query:
+#             products = Product.objects.filter(
+#                 Q(title__icontains=query) |
+#                 Q(category__title__icontains=query) |
+#                 Q(vendor__user__username__icontains=query)
+#             )
+#             serializer = ProductSerializer(products, many=True)
+#             return Response(serializer.data, status=status.HTTP_200_OK)
+#         else:
+#             return Response({"error": "No search query provided."}, status=status.HTTP_400_BAD_REQUEST)
+
+class ProductSearchView(APIView):
+    def get(self, request, format=None):
+        query = request.GET.get('q', '')
+        if query:
+            products = Product.objects.filter(
+                Q(title__icontains=query) |
+                Q(category__title__icontains=query) |
+                Q(vendor__user__username__icontains=query)
+            )
+            serializer = ProductSerializer(products, many=True, context={'request': request})
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            return Response({"error": "No search query provided."}, status=status.HTTP_400_BAD_REQUEST)
 
 
 

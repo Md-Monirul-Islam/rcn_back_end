@@ -293,3 +293,31 @@ class VendorDailyReportSerializer(serializers.Serializer):
             ret.pop('year', None)
 
         return ret
+    
+
+
+
+#search serialzer
+# class ProductSerializer(serializers.ModelSerializer):
+#     category = serializers.CharField(source='category.title')
+#     vendor = serializers.CharField(source='vendor.user.username')
+
+#     class Meta:
+#         model = Product
+#         fields = ['id', 'title', 'category', 'vendor', 'price', 'image']
+
+
+class ProductSerializer(serializers.ModelSerializer):
+    category = serializers.CharField(source='category.title')
+    vendor = serializers.CharField(source='vendor.user.username')
+    image = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Product
+        fields = ['id', 'title', 'category', 'vendor', 'price', 'image']
+
+    def get_image(self, obj):
+        request = self.context.get('request')
+        if obj.image:
+            return request.build_absolute_uri(obj.image.url)
+        return None
