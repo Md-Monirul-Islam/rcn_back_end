@@ -23,6 +23,7 @@ class Vendor(models.Model):
 class ProductCategory(models.Model):
     title = models.CharField(max_length=255)
     detail = models.TextField(blank=True,null=True)
+    category_image = models.ImageField(upload_to='category_images',null=True,blank=True)
 
     def __str__(self):
         return self.title
