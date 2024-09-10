@@ -1,23 +1,24 @@
+import json
 from uuid import uuid4
 from django.db.models import DateField
-from django.shortcuts import redirect, render
+from django.shortcuts import redirect
 import requests
 from rest_framework.response import Response
-from rest_framework import generics,permissions,viewsets
+from rest_framework import generics,viewsets
 from django.views.decorators.csrf import csrf_exempt
-from django.http import HttpResponseNotAllowed, JsonResponse,HttpRequest
+from django.http import HttpResponseNotAllowed, JsonResponse
 from django.contrib.auth import authenticate
 from django.contrib.auth.hashers import make_password
-from django.contrib.auth.models import User,Group
+from django.contrib.auth.models import User
 from django.db import IntegrityError
 from .models import *
 from .serializer import *
 from .pagination import CustomPagination
 from rest_framework import status
 from django.contrib.auth import logout
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view,permission_classes
 from django.views.decorators.csrf import csrf_exempt
-from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly 
+from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly,AllowAny
 from django.shortcuts import get_object_or_404
 from rest_framework.exceptions import NotAuthenticated
 from django.db.models import Count
@@ -26,6 +27,8 @@ from django.db.models import OuterRef, Subquery
 from rest_framework.views import APIView
 from django.db.models import Q
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework.authentication import TokenAuthentication
+from rest_framework_simplejwt.tokens import RefreshToken
 
 # Create your views here.
 
@@ -113,24 +116,70 @@ def vendor_register(request):
 
 
 
+# @csrf_exempt
+# def vendor_login(request):
+#     username = request.POST.get('username')
+#     password = request.POST.get('password')
+#     user = authenticate(username=username,password=password)
+#     if user:
+#         vendor = Vendor.objects.get(user=user)
+#         msg = {
+#         'bool': True,
+#         'user': user.username,
+#         'id': vendor.id
+#         }
+#     else:
+#         msg = {
+#             'bool':False,
+#             'msg':'Invalid username or password !!'
+#         }
+#     return JsonResponse(msg)
+
+
 @csrf_exempt
 def vendor_login(request):
-    username = request.POST.get('username')
-    password = request.POST.get('password')
-    user = authenticate(username=username,password=password)
-    if user:
-        vendor = Vendor.objects.get(user=user)
-        msg = {
-        'bool': True,
-        'user': user.username,
-        'id': vendor.id
-        }
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({'bool': False, 'msg': 'Invalid JSON input'})
+
+        username = data.get('username')
+        password = data.get('password')
+
+        user = authenticate(username=username, password=password)
+
+        if user:
+            try:
+                vendor = Vendor.objects.get(user=user)
+
+                # Generate JWT tokens for the authenticated user
+                refresh = RefreshToken.for_user(user)
+                access_token = str(refresh.access_token)
+                refresh_token = str(refresh)
+
+                # Return success message with tokens and vendor info
+                msg = {
+                    'bool': True,
+                    'user': user.username,
+                    'id': vendor.id,
+                    'access_token': access_token,  # JWT access token
+                    'refresh_token': refresh_token,  # JWT refresh token
+                }
+            except Vendor.DoesNotExist:
+                msg = {
+                    'bool': False,
+                    'msg': 'Vendor not found for this user!'
+                }
+        else:
+            msg = {
+                'bool': False,
+                'msg': 'Invalid username or password!'
+            }
+
+        return JsonResponse(msg)
     else:
-        msg = {
-            'bool':False,
-            'msg':'Invalid username or password !!'
-        }
-    return JsonResponse(msg)
+        return JsonResponse({'bool': False, 'msg': 'Invalid request method. Only POST is allowed.'})
 
 
 
@@ -171,13 +220,15 @@ def vendor_change_password(request,vendor_id):
 #         return qs
     
 
-
+# @permission_classes([IsAuthenticatedOrReadOnly])
 class ProductList(generics.ListCreateAPIView):
     queryset = Product.objects.all().order_by('-id')
     serializer_class = ProductListSerializer
     pagination_class = CustomPagination
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticatedOrReadOnly ]
+    authentication_classes = [JWTAuthentication, TokenAuthentication]
+    
+    # Use IsAuthenticatedOrReadOnly to allow non-authenticated users to read but restrict writing to authenticated users
+    permission_classes = [IsAuthenticated]
     def get_queryset(self):
         qs = super().get_queryset()
         user = self.request.user
@@ -197,7 +248,12 @@ class ProductList(generics.ListCreateAPIView):
         qs = qs.filter(vendor=vendor)
 
         if 'fetch_limit' in self.request.GET:
-            limit = self.request.GET['fetch_limit']
+             limit = self.request.GET['fetch_limit']
+             qs = qs[:int(limit)]
+
+        if 'popular_fetch_limit' in self.request.GET:
+            limit = self.request.GET['popular_fetch_limit']
+            qs = qs.order_by('-downloads','-id')
             qs = qs[:int(limit)]
         return qs
 
@@ -228,12 +284,10 @@ class DeleteProductImgDetail(generics.RetrieveUpdateDestroyAPIView):
     
 
 
-
+@permission_classes([IsAuthenticatedOrReadOnly])
 class ProductDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductDetailSerializer
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
 
 
 
