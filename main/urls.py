@@ -31,6 +31,8 @@ urlpatterns = [
 
     path('vendor/<int:vendor_id>/products/', views.VendorProductsView.as_view(), name='vendor-products'),
 
+    path('vendor-products/',views.VendorProductList.as_view(),name='vendor-product-list'),
+
     ######## Product ########
     path('products/',views.ProductList.as_view(),name='product-list'),
 
@@ -74,6 +76,8 @@ urlpatterns = [
 
     path('orders/',views.OrderList.as_view(),name='order_list'),
 
+    path('submit-order/', views.SubmitOrder.as_view(), name='submit-order'),
+
     path('order/<int:pk>/',views.OrderDetails.as_view(),name='order_details'),
 
     path('order-items/',views.OrderItemsList.as_view(),name='order_items'),
@@ -103,10 +107,10 @@ urlpatterns = [
 
     path('search/', ProductSearchView.as_view(), name='product-search'),
 
-    path('initiate/', views.initiate_payment, name='initiate_payment'),
-    path('success/', views.payment_success, name='payment_success'),
-    path('fail/', views.payment_fail, name='payment_fail'),
-    path('cancel/', views.payment_cancel, name='payment_cancel'),
+    path('initiate-payment/', views.initiate_payment, name='initiate-payment'),
+    path('payment-success/', views.payment_success, name='payment-success'),
+    path('payment-fail/', views.payment_fail, name='payment-fail'),
+    path('payment-cancel/', views.payment_cancel, name='payment-cancel'),
 
 
 ]

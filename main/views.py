@@ -195,40 +195,40 @@ def vendor_change_password(request,vendor_id):
 
     
 
-# class ProductList(generics.ListCreateAPIView):
-#     queryset = Product.objects.all().order_by('-downloads','-id')
-#     serializer_class = ProductListSerializer
-#     pagination_class = CustomPagination
-#     authentication_classes = [JWTAuthentication]
-#     permission_classes = [IsAuthenticatedOrReadOnly]
+# @permission_classes([IsAuthenticatedOrReadOnly])
+class ProductList(generics.ListCreateAPIView):
+    queryset = Product.objects.all().order_by('-downloads','-id')
+    serializer_class = ProductListSerializer
+    pagination_class = CustomPagination
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticatedOrReadOnly]
 
-#     def get_queryset(self):
-#         qs = super().get_queryset()
-#         category_id = self.request.GET.get('category')
-#         if category_id:
-#             category = ProductCategory.objects.get(id=category_id)
-#             qs = qs.filter(category=category)
+    def get_queryset(self):
+        qs = super().get_queryset()
+        category_id = self.request.GET.get('category')
+        if category_id:
+            category = ProductCategory.objects.get(id=category_id)
+            qs = qs.filter(category=category)
         
-#         if 'fetch_limit' in self.request.GET:
-#             limit = self.request.GET['fetch_limit']
-#             qs = qs[:int(limit)]
+        if 'fetch_limit' in self.request.GET:
+            limit = self.request.GET['fetch_limit']
+            qs = qs[:int(limit)]
 
-#         if 'popular_fetch_limit' in self.request.GET:
-#             limit = self.request.GET['popular_fetch_limit']
-#             qs = qs.order_by('-downloads','-id')
-#             qs = qs[:int(limit)]
-#         return qs
+        if 'popular_fetch_limit' in self.request.GET:
+            limit = self.request.GET['popular_fetch_limit']
+            qs = qs.order_by('-downloads','-id')
+            qs = qs[:int(limit)]
+        return qs
     
 
 # @permission_classes([IsAuthenticatedOrReadOnly])
-class ProductList(generics.ListCreateAPIView):
+class VendorProductList(generics.ListCreateAPIView):
     queryset = Product.objects.all().order_by('-id')
     serializer_class = ProductListSerializer
     pagination_class = CustomPagination
     authentication_classes = [JWTAuthentication, TokenAuthentication]
-    
-    # Use IsAuthenticatedOrReadOnly to allow non-authenticated users to read but restrict writing to authenticated users
     permission_classes = [IsAuthenticated]
+
     def get_queryset(self):
         qs = super().get_queryset()
         user = self.request.user
@@ -579,13 +579,59 @@ class UserDetails(generics.RetrieveUpdateDestroyAPIView):
 
 
 
-class OrderList(generics.ListCreateAPIView):
+class OrderList(generics.ListAPIView):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
+    authentication_classes = [JWTAuthentication, TokenAuthentication]
+    permission_classes = [IsAuthenticated]
 
     def post(self,request,*args, **kwargs):
         print(request.POST)
         return super().post(request,*args, **kwargs)
+    
+
+
+
+class SubmitOrder(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        customer = request.user.customer
+        cart_data = request.data.get('cart_items', [])
+        total_amount = 0  # Initialize total_amount to 0
+
+        # Calculate the total amount on the backend
+        for item in cart_data:
+            product_id = item.get('product_id')
+            quantity = item.get('quantity', 1)
+            product = Product.objects.get(id=product_id)
+            total_amount += product.price * quantity
+
+        # Create a new Order
+        order = Order.objects.create(
+            customer=customer,
+            total_amount=total_amount,
+            order_status=False
+        )
+
+        # Create OrderItems for each product in the cart
+        for item in cart_data:
+            product_id = item.get('product_id')
+            quantity = item.get('quantity', 1)
+            product = Product.objects.get(id=product_id)
+            
+            # Create order item
+            OrderItems.objects.create(
+                order=order,
+                product=product,
+                quantity=quantity,
+                price=product.price
+            )
+
+        # Serialize and return the response
+        order_serializer = OrderSerializer(order)
+        return Response(order_serializer.data, status=status.HTTP_201_CREATED)
+
     
 
 #### Order Items
@@ -1030,115 +1076,139 @@ class ProductSearchView(APIView):
 
 
 # Payment using Sslcommerz
-
+from decimal import Decimal, InvalidOperation
 base_url = 'http://127.0.0.1:8000'
 
+from django.core.exceptions import ValidationError
+from decimal import Decimal
+
+@permission_classes([IsAuthenticated])
 @api_view(['POST'])
 def initiate_payment(request):
-    if request.method == 'POST':
-        post_data = request.data
-        order_id = post_data.get('order_id')
-        
-        try:
-            order = Order.objects.get(id=order_id)
-        except Order.DoesNotExist:
-            return Response({"error": "Order does not exist"}, status=400)
-        
-        total_amount = post_data.get('amount')
-        customer = order.customer
-        user = customer.user
-        
-        # Fetch the default customer address
-        customer_address = customer.customer_address.filter(default_address=True).first()
-        
-        if not customer_address:
-            return Response({"error": "Default customer address does not exist"}, status=400)
-        
-        # Set transaction ID and create a new transaction
-        transaction_id = uuid4().hex
-        transaction = Transaction.objects.create(
-            transaction_id=transaction_id,
-            amount=total_amount,
-            user=user,
-            customer_address=customer_address,
-            customer_email=user.email,
-            customer_phone=customer.phone,
-            customer_postcode=customer_address.post,
-        )
-        
-        # Prepare payment data using the customer's default address
-        payment_data = {
-            'store_id': 'kopot665596f0af929',
-            'store_passwd': 'kopot665596f0af929@ssl',
-            'total_amount': transaction.amount,
-            'currency': transaction.currency,
-            'tran_id': transaction.transaction_id,
-            'product_name': 'Order Items',
-            'product_category': 'Various',
-            'product_profile': 'General',
-            'success_url': f'{base_url}/api/success/',
-            'fail_url': f'{base_url}/api/fail/',
-            'cancel_url': f'{base_url}/api/cancel/',
-            'shipping_method': 'Courier',
-            'cus_country': 'Bangladesh',
-            'cus_name': user.get_full_name(),
-            'cus_email': transaction.customer_email,
-            'cus_phone': transaction.customer_phone,
-            'cus_add1': customer_address.address,
-            'cus_city': customer_address.city,
-            'cus_postcode': transaction.customer_postcode,
-            'ship_name': user.get_full_name(),
-            'ship_add1': customer_address.address,
-            'ship_city': customer_address.city,
-            'ship_state': customer_address.city,
-            'ship_postcode': customer_address.post,
-            'ship_country': 'Bangladesh',
-        }
+    post_data = request.data
+    order_id = post_data.get('order_id')
 
-        response = requests.post('https://sandbox.sslcommerz.com/gwprocess/v4/api.php', data=payment_data)
-        return Response(response.json())
-    
+    try:
+        order = Order.objects.get(id=order_id)
+    except Order.DoesNotExist:
+        return Response({"error": "Order does not exist"}, status=400)
 
+    amount_str = post_data.get('amount')
+
+    # Validate and convert amount
+    try:
+        total_amount = Decimal(amount_str).quantize(Decimal('0.01'))
+        print(f"Received amount: {amount_str}")
+        if total_amount <= 0:
+            return Response({"error": "Amount must be greater than zero"}, status=400)
+    except (ValueError, InvalidOperation):
+        return Response({"error": f"Invalid amount format: {amount_str}"}, status=400)
+
+
+    customer = order.customer
+    user = customer.user
+
+    # Fetch the default customer address
+    customer_address = customer.customer_address.filter(default_address=True).first()
+
+    if not customer_address:
+        return Response({"error": "Default customer address does not exist"}, status=400)
+
+    # Set transaction ID and create a new transaction
+    transaction_id = uuid4().hex
+    transaction = Transaction.objects.create(
+        transaction_id=transaction_id,
+        amount=total_amount,
+        user=user,
+        customer_address=customer_address,
+        customer_email=user.email,
+        customer_phone=customer.phone,
+        customer_postcode=customer_address.post,
+    )
+
+    # Prepare payment data using SSLCommerz API
+    payment_data = {
+        'store_id': 'kopot665596f0af929',
+        'store_passwd': 'kopot665596f0af929@ssl',
+        'total_amount': transaction.amount,
+        'currency': transaction.currency,
+        'tran_id': transaction.transaction_id,
+        'product_name': 'Order Items',
+        'product_category': 'Various',
+        'product_profile': 'General',
+        'success_url': f'{base_url}/api/payment-success/',
+        'fail_url': f'{base_url}/api/payment-fail/',
+        'cancel_url': f'{base_url}/api/payment-cancel/',
+        'shipping_method': 'Courier',
+        'cus_country': 'Bangladesh',
+        'cus_name': user.get_full_name(),
+        'cus_email': transaction.customer_email,
+        'cus_phone': transaction.customer_phone,
+        'cus_add1': customer_address.address,
+        'cus_city': customer_address.city,
+        'cus_postcode': transaction.customer_postcode,
+        'ship_name': user.get_full_name(),
+        'ship_add1': customer_address.address,
+        'ship_city': customer_address.city,
+        'ship_state': customer_address.city,
+        'ship_postcode': customer_address.post,
+        'ship_country': 'Bangladesh',
+    }
+
+    # Call SSLCommerz payment API
+    response = requests.post('https://sandbox.sslcommerz.com/gwprocess/v4/api.php', data=payment_data)
+    return Response(response.json())
 
 
 @api_view(['POST'])
+@permission_classes([AllowAny])
 def payment_success(request):
-    if request.method == 'POST':
-        post_data = request.POST
-        transaction_id = post_data.get('tran_id')
-        try:
-            transaction = Transaction.objects.get(transaction_id=transaction_id)
-            transaction.status = 'SUCCESS'
-            transaction.save()
-            client_site_url = f'http://localhost:5173/'
-            return redirect(client_site_url)
-        except Transaction.DoesNotExist:
-            return Response({'error': 'Transaction not found'}, status=status.HTTP_404_NOT_FOUND)
-            
+    post_data = request.POST
+    transaction_id = post_data.get('tran_id')  # Get the transaction ID
+
+    # Log post_data to see if SSLCommerz sent it correctly
+    print(f"POST data received in payment_success: {post_data}")
+
+    try:
+        # Fetch the transaction
+        transaction = Transaction.objects.get(transaction_id=transaction_id)
+        
+        # Update transaction status to success
+        transaction.status = 'SUCCESS'
+        transaction.save()
+
+        # Redirect to frontend
+        client_site_url = f'http://localhost:3000/'
+        return redirect(client_site_url)
+    except Transaction.DoesNotExist:
+        return Response({'error': 'Transaction not found'}, status=status.HTTP_404_NOT_FOUND)
+
+
 
 @api_view(['POST'])
+@permission_classes([AllowAny])
 def payment_fail(request):
-    if request.method == 'POST':
-        post_data = request.POST
-        transaction_id = post_data.get('tran_id')
-        try:
-            transaction = Transaction.objects.get(transaction_id=transaction_id)
-            transaction.status = 'FAILED'
-            transaction.save()
-            client_site_url = f'http://localhost:5173/paymentFail?transaction_id={transaction_id}&status={transaction.status}'
-            return redirect(client_site_url)
-        except Transaction.DoesNotExist:
-            return Response({'error': 'Transaction not found'}, status=status.HTTP_404_NOT_FOUND)
+    post_data = request.POST
+    transaction_id = post_data.get('tran_id')
+    try:
+        transaction = Transaction.objects.get(transaction_id=transaction_id)
+        transaction.status = 'FAILED'
+        transaction.save()
+        client_site_url = f'http://localhost:3000/'
+        return redirect(client_site_url)
+    except Transaction.DoesNotExist:
+        return Response({'error': 'Transaction not found'}, status=status.HTTP_404_NOT_FOUND)
 
+
+@permission_classes([AllowAny])
 @api_view(['POST'])
 def payment_cancel(request):
-    if request.method == 'POST':
-        post_data = request.POST
-        transaction_id = post_data.get('tran_id')
-        try:
-            transaction = Transaction.objects.get(transaction_id=transaction_id)
-            transaction.status = 'CANCELLED'
-            transaction.save()
-            return Response({'status': 'cancelled'})
-        except Transaction.DoesNotExist:
-            return Response({'error': 'Transaction not found'}, status=status.HTTP_404_NOT_FOUND)
+    post_data = request.POST
+    transaction_id = post_data.get('tran_id')
+    try:
+        transaction = Transaction.objects.get(transaction_id=transaction_id)
+        transaction.status = 'CANCELLED'
+        transaction.save()
+        return Response({'status': 'cancelled'})
+    except Transaction.DoesNotExist:
+        return Response({'error': 'Transaction not found'}, status=status.HTTP_404_NOT_FOUND)
