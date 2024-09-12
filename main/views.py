@@ -29,6 +29,9 @@ from django.db.models import Q
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.authentication import TokenAuthentication
 from rest_framework_simplejwt.tokens import RefreshToken
+from decimal import Decimal, InvalidOperation
+from django.core.exceptions import ValidationError
+from decimal import Decimal
 
 # Create your views here.
 
@@ -200,8 +203,8 @@ class ProductList(generics.ListCreateAPIView):
     queryset = Product.objects.all().order_by('-downloads','-id')
     serializer_class = ProductListSerializer
     pagination_class = CustomPagination
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    # authentication_classes = [JWTAuthentication]
+    # permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         qs = super().get_queryset()
@@ -772,6 +775,8 @@ def delete_customer_orders(request, customer_id):
 class CustomerAddressViewSet(viewsets.ModelViewSet):
     serializer_class = CustomerAddressSerializer
     queryset = CustomerAddress.objects.all()
+    authentication_classes = ([JWTAuthentication,TokenAuthentication])
+    permission_classes = [IsAuthenticated]
 
     def create(self, request, *args, **kwargs):
         data = request.data.copy()
@@ -1076,11 +1081,8 @@ class ProductSearchView(APIView):
 
 
 # Payment using Sslcommerz
-from decimal import Decimal, InvalidOperation
-base_url = 'http://127.0.0.1:8000'
 
-from django.core.exceptions import ValidationError
-from decimal import Decimal
+base_url = 'http://127.0.0.1:8000'
 
 @permission_classes([IsAuthenticated])
 @api_view(['POST'])
@@ -1124,6 +1126,7 @@ def initiate_payment(request):
         customer_email=user.email,
         customer_phone=customer.phone,
         customer_postcode=customer_address.post,
+        order=order,
     )
 
     # Prepare payment data using SSLCommerz API
