@@ -954,19 +954,37 @@ class CategoryDetail(generics.RetrieveUpdateDestroyAPIView):
 
 
 
+# @csrf_exempt
+# def Update_Order_Status(request, pk):
+#     order_id = pk
+#     if request.method == "POST":
+#         update_order_status = Order.objects.filter(id=order_id).update(order_status=True)
+#         msg = {
+#             'bool': False,
+#         }
+#         if update_order_status:
+#             msg = {
+#                 'bool': True,
+#             }
+#         return JsonResponse(msg)
+
+
 @csrf_exempt
 def Update_Order_Status(request, pk):
     order_id = pk
     if request.method == "POST":
-        update_order_status = Order.objects.filter(id=order_id).update(order_status=True)
-        msg = {
-            'bool': False,
-        }
-        if update_order_status:
-            msg = {
-                'bool': True,
-            }
-        return JsonResponse(msg)
+        try:
+            # Update the order status to "True" or a specific status, like "COMPLETED"
+            update_order_status = Order.objects.filter(id=order_id).update(order_status=True)
+            msg = {'bool': False}
+            
+            if update_order_status:
+                msg = {'bool': True}
+                
+            return JsonResponse(msg)
+        except Order.DoesNotExist:
+            return JsonResponse({'error': 'Order not found'}, status=404)
+    return JsonResponse({'error': 'Invalid request method'}, status=400)
     
 
 
@@ -1181,7 +1199,7 @@ def payment_success(request):
         transaction.save()
 
         # Redirect to frontend
-        client_site_url = f'http://localhost:3000/'
+        client_site_url = f'http://localhost:3000/order-success/'
         return redirect(client_site_url)
     except Transaction.DoesNotExist:
         return Response({'error': 'Transaction not found'}, status=status.HTTP_404_NOT_FOUND)
@@ -1215,3 +1233,5 @@ def payment_cancel(request):
         return Response({'status': 'cancelled'})
     except Transaction.DoesNotExist:
         return Response({'error': 'Transaction not found'}, status=status.HTTP_404_NOT_FOUND)
+    
+
