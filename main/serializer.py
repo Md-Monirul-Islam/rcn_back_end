@@ -132,24 +132,24 @@ class CustomerSerializer(serializers.ModelSerializer):
 class CustomerDetails(generics.RetrieveUpdateDestroyAPIView):
     queryset = Customer.objects.all()
     serializer_class = CustomerSerializer
-        
-    
     # depth = 1
 
 
+
+class TransactionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Transaction
+        fields = ['status']  # Include other relevant fields
+
 class OrderSerializer(serializers.ModelSerializer):
-    # customer = CustomerSerializer()
+    transactions = TransactionSerializer(many=True)  # Assuming an Order can have multiple transactions
+
     class Meta:
         model = Order
-        fields = '__all__'
-        # depth = 1
-        # def __init__(self,*args, **kwargs):
-        #     super(OrderSerializer,self).__init__(*args, **kwargs)
-        #     self.Meta.depth=1
+        fields = ['id', 'customer', 'order_time', 'order_status', 'total_amount', 'transactions']
 
     def to_representation(self, instance):
         response = super().to_representation(instance)
-        # Add customer details from the related User model
         response['customer'] = {
             'customer_id': instance.customer.user.id,
             'first_name': instance.customer.user.first_name,
@@ -321,3 +321,6 @@ class ProductSerializer(serializers.ModelSerializer):
         if obj.image:
             return request.build_absolute_uri(obj.image.url)
         return None
+    
+
+
