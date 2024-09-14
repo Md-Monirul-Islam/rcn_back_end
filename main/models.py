@@ -74,14 +74,13 @@ class Customer(models.Model):
 
 class Order(models.Model):
     Order_STATUS = (
-        ('Pending', 'Pending'),
         ('Confirm', 'Confirm'),
         ('Delivered', 'Delivered'),
         ('Cancelled', 'Cancelled'),
     )
     customer = models.ForeignKey(Customer,on_delete=models.CASCADE,related_name='customer_order')
     order_time = models.DateTimeField(auto_now_add=True)
-    order_status = models.CharField(max_length=200,blank=True,null=True,choices=Order_STATUS,default='Pending')
+    order_status = models.CharField(max_length=200,blank=True,null=True,choices=Order_STATUS)
     total_amount = models.DecimalField(max_digits=10,decimal_places=2,default=0)
 
     def __str__(self):
