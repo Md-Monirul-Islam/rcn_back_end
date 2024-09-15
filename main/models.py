@@ -52,6 +52,7 @@ class Product(models.Model):
     product_file = models.FileField(upload_to='product_files/',null=True)
     downloads = models.IntegerField(null=True,default=0)
     publish_status = models.BooleanField(default=False)
+    hot_deal = models.BooleanField(default=False,blank=True,null=True)
     def __str__(self):
         return self.title
     
