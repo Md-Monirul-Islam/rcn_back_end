@@ -289,7 +289,7 @@ class DeleteProductImgDetail(generics.RetrieveUpdateDestroyAPIView):
 
 @permission_classes([IsAuthenticatedOrReadOnly])
 class ProductDetail(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Product.objects.all()
+    queryset = Product.objects.all().order_by('-id')
     serializer_class = ProductDetailSerializer
 
 
@@ -583,7 +583,7 @@ class UserDetails(generics.RetrieveUpdateDestroyAPIView):
 
 
 class OrderList(generics.ListAPIView):
-    queryset = Order.objects.all()
+    queryset = Order.objects.all().order_by('-id')
     serializer_class = OrderSerializer
     authentication_classes = [JWTAuthentication, TokenAuthentication]
     permission_classes = [IsAuthenticated]
@@ -642,7 +642,7 @@ class SubmitOrder(APIView):
 #### Order Items
 
 class OrderItemsList(generics.ListCreateAPIView):
-    queryset = OrderItems.objects.all()
+    queryset = OrderItems.objects.all().order_by('-id')
     serializer_class = OrderItemSerializer
 
     
@@ -662,7 +662,7 @@ class OrderDetails(generics.ListAPIView):
 
 #Customer order item list
 class CustomerOrderItemsList(generics.ListAPIView):
-    queryset = OrderItems.objects.all()
+    queryset = OrderItems.objects.all().order_by('-id')
     serializer_class = OrderItemSerializer
 
     def get_queryset(self):
@@ -674,7 +674,7 @@ class CustomerOrderItemsList(generics.ListAPIView):
 
 #Vendor order item list
 class VendorOrderItemsList(generics.ListAPIView):
-    queryset = OrderItems.objects.all()
+    queryset = OrderItems.objects.all().order_by('-id')
     serializer_class = OrderItemSerializer
 
     def get_queryset(self):

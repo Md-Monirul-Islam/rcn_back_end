@@ -60,6 +60,8 @@ class Product(models.Model):
             return self.tags.split(',')
         else:
             return []
+    # class Meta:
+    #     ordering = ('-id',)
         
 
 
