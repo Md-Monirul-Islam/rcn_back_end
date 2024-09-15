@@ -187,6 +187,7 @@ def vendor_login(request):
 
 
 @csrf_exempt
+@permission_classes([IsAuthenticated])
 def vendor_change_password(request,vendor_id):
     password = request.POST.get('password')
     vendor = Vendor.objects.get(id=vendor_id)
@@ -375,6 +376,7 @@ def CustomerLogin(request):
 
 
 @csrf_exempt
+@permission_classes([IsAuthenticated])
 def customer_change_password(request,customer_id):
     password = request.POST.get('password')
     customer = Customer.objects.get(id=customer_id)
