@@ -139,14 +139,14 @@ class CustomerDetails(generics.RetrieveUpdateDestroyAPIView):
 class TransactionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Transaction
-        fields = ['status']  # Include other relevant fields
+        fields = ['status']
 
 class OrderSerializer(serializers.ModelSerializer):
-    transactions = TransactionSerializer(many=True)  # Assuming an Order can have multiple transactions
+    transactions = TransactionSerializer(many=True)
 
     class Meta:
         model = Order
-        fields = ['id', 'customer', 'order_time', 'order_status', 'total_amount', 'transactions']
+        fields = ['id', 'customer', 'order_time', 'order_status', 'total_amount', 'transactions','payment_method']
 
     def to_representation(self, instance):
         response = super().to_representation(instance)

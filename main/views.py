@@ -601,7 +601,8 @@ class SubmitOrder(APIView):
     def post(self, request, *args, **kwargs):
         customer = request.user.customer
         cart_data = request.data.get('cart_items', [])
-        total_amount = 0  # Initialize total_amount to 0
+        total_amount = 0
+        payment_method = request.data.get('payment_method', 'Online Payment')
 
         # Calculate the total amount on the backend
         for item in cart_data:
@@ -614,7 +615,8 @@ class SubmitOrder(APIView):
         order = Order.objects.create(
             customer=customer,
             total_amount=total_amount,
-            order_status=False
+            order_status='Pending',
+            payment_method=payment_method  # Accept payment method from request (Cash on Delivery or Online Payment)
         )
 
         # Create OrderItems for each product in the cart
