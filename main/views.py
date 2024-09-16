@@ -617,12 +617,18 @@ class SubmitOrder(APIView):
             product = Product.objects.get(id=product_id)
             total_amount += product.price * quantity
 
+        # Set order status based on payment method
+        if payment_method == 'mobile-banking':
+            order_status = 'Confirm'
+        else:
+            order_status = 'Pending'
+
         # Create a new Order
         order = Order.objects.create(
             customer=customer,
             total_amount=total_amount,
-            order_status='Pending',
-            payment_method=payment_method  # Accept payment method from request (Cash on Delivery or Online Payment)
+            order_status=order_status,  # Set based on payment method
+            payment_method=payment_method
         )
 
         # Create OrderItems for each product in the cart
@@ -642,6 +648,7 @@ class SubmitOrder(APIView):
         # Serialize and return the response
         order_serializer = OrderSerializer(order)
         return Response(order_serializer.data, status=status.HTTP_201_CREATED)
+
 
     
 
@@ -1305,5 +1312,6 @@ def delete_vendor(request, pk):
 class OrderListForAdminView(generics.ListCreateAPIView):
     queryset = Order.objects.all().order_by('-id')
     serializer_class = OrderSerializer
+    pagination_class = CustomPagination
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
