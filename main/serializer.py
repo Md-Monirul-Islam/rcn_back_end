@@ -137,20 +137,36 @@ class CustomerDetails(generics.RetrieveUpdateDestroyAPIView):
 
 
 
+class OrderItemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OrderItems
+        fields = '__all__'
+        # Removed depth to avoid recursive serialization
+
+    def to_representation(self, instance):
+        response = super().to_representation(instance)
+        # Explicitly serialize related fields without recursion
+        response['product'] = ProductDetailSerializer(instance.product, context=self.context).data
+        return response
+
+
 class TransactionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Transaction
         fields = ['status']
 
+
 class OrderSerializer(serializers.ModelSerializer):
-    transactions = TransactionSerializer(many=True)
+    transactions = TransactionSerializer(many=True, read_only=True)
+    order_items = OrderItemSerializer(many=True, read_only=True)
 
     class Meta:
         model = Order
-        fields = ['id', 'customer', 'order_time', 'order_status', 'total_amount', 'transactions','payment_method']
+        fields = ['id', 'customer', 'order_time', 'order_status', 'total_amount', 'transactions', 'payment_method', 'order_items']
 
     def to_representation(self, instance):
         response = super().to_representation(instance)
+        # Serializing customer details explicitly
         response['customer'] = {
             'customer_id': instance.customer.user.id,
             'first_name': instance.customer.user.first_name,
@@ -161,6 +177,31 @@ class OrderSerializer(serializers.ModelSerializer):
         return response
 
 
+
+# class TransactionSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = Transaction
+#         fields = ['status']
+
+# class OrderSerializer(serializers.ModelSerializer):
+#     transactions = TransactionSerializer(many=True)
+
+#     class Meta:
+#         model = Order
+#         fields = ['id', 'customer', 'order_time', 'order_status', 'total_amount', 'transactions','payment_method']
+
+#     def to_representation(self, instance):
+#         response = super().to_representation(instance)
+#         response['customer'] = {
+#             'customer_id': instance.customer.user.id,
+#             'first_name': instance.customer.user.first_name,
+#             'last_name': instance.customer.user.last_name,
+#             'email': instance.customer.user.email,
+#             'phone': instance.customer.phone,
+#         }
+#         return response
+
+
 class OrderDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = OrderItems
@@ -169,22 +210,22 @@ class OrderDetailSerializer(serializers.ModelSerializer):
 
 
 
-class OrderItemSerializer(serializers.ModelSerializer):
-    # order = OrderSerializer()
-    # product = ProductDetailSerializer()
-    # order_count = serializers.IntegerField(read_only=True)
-    class Meta:
-        model = OrderItems
-        fields = '__all__'
-        # fields = ['order', 'product', 'quantity', 'price', 'order_count']
-        # depth = 1
+# class OrderItemSerializer(serializers.ModelSerializer):
+#     # order = OrderSerializer()
+#     # product = ProductDetailSerializer()
+#     # order_count = serializers.IntegerField(read_only=True)
+#     class Meta:
+#         model = OrderItems
+#         fields = '__all__'
+#         # fields = ['order', 'product', 'quantity', 'price', 'order_count']
+#         # depth = 1
 
-    def to_representation(self, instance):
-        response = super().to_representation(instance)
-        response['order'] = OrderSerializer(instance.order, context=self.context).data
-        response['product'] = ProductDetailSerializer(instance.product, context=self.context).data
+#     def to_representation(self, instance):
+#         response = super().to_representation(instance)
+#         response['order'] = OrderSerializer(instance.order, context=self.context).data
+#         response['product'] = ProductDetailSerializer(instance.product, context=self.context).data
 
-        return response
+#         return response
     
 
 
