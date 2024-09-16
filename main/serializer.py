@@ -138,6 +138,7 @@ class CustomerDetails(generics.RetrieveUpdateDestroyAPIView):
 
 
 class OrderItemSerializer(serializers.ModelSerializer):
+    order_status = serializers.CharField(source='order.order_status', read_only=True)
     class Meta:
         model = OrderItems
         fields = '__all__'

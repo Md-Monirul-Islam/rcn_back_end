@@ -1315,3 +1315,16 @@ class OrderListForAdminView(generics.ListCreateAPIView):
     pagination_class = CustomPagination
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
+
+
+
+
+class CustomerOrderItemListShowForAdmin(generics.ListAPIView):
+    queryset = OrderItems.objects.all()
+    serializer_class = OrderItemSerializer
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        customer_id = self.kwargs['customer_id']
+        qs = qs.filter(order__customer__id=customer_id)
+        return qs
