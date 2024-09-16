@@ -1,6 +1,7 @@
 import datetime
 from rest_framework import serializers, generics
 from django.contrib.auth.models import User
+from django.contrib.auth import authenticate
 from .models import Product, ProductCategory, ProductImage, Transaction, Vendor,Customer,Order,OrderItems,CustomerAddress, ProductRating, WishList
 
 
@@ -324,3 +325,18 @@ class ProductSerializer(serializers.ModelSerializer):
     
 
 
+class SuperuserLoginSerializer(serializers.Serializer):
+    username = serializers.CharField()
+    password = serializers.CharField(write_only=True)
+
+    def validate(self, data):
+        username = data.get('username')
+        password = data.get('password')
+
+        # Authenticate the user
+        user = authenticate(username=username, password=password)
+
+        if user and user.is_superuser:
+            return user
+        else:
+            raise serializers.ValidationError("Invalid credentials or not a superuser.")

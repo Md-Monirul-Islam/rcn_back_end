@@ -115,6 +115,10 @@ urlpatterns = [
     path('payment-cancel/', views.payment_cancel, name='payment-cancel'),
 
 
+    path('admin-dashboard/',views.admin_dashboard,name='admin_dashboard'),
+    path('superuser-login/', views.SuperuserLoginView.as_view(), name='superuser-login'),
+    path('delete-vendor/<int:pk>/', views.delete_vendor, name='delete_vendor'),
+
 
 ]
 urlpatterns += router.urls

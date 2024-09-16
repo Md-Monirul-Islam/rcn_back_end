@@ -32,6 +32,8 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from decimal import Decimal, InvalidOperation
 from django.core.exceptions import ValidationError
 from decimal import Decimal
+from rest_framework_simplejwt.views import TokenObtainPairView
+from main.permissions import IsSuperuser
 
 # Create your views here.
 
@@ -1246,3 +1248,52 @@ def payment_cancel(request):
         return Response({'error': 'Transaction not found'}, status=status.HTTP_404_NOT_FOUND)
     
 
+
+
+
+class SuperuserLoginView(TokenObtainPairView):
+    permission_classes = [AllowAny]
+    def post(self, request, *args, **kwargs):
+        response = super().post(request, *args, **kwargs)
+        user = self.get_user_from_request(request)
+        
+        if not user.is_superuser:
+            return Response(
+                {"detail": "You do not have permission to perform this action."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        return response
+
+    def get_user_from_request(self, request):
+        # Extract the user from the request's validated token
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        return serializer.user
+        
+        
+
+def admin_dashboard(request):
+    totalVendors = Vendor.objects.all().count()
+    totalCustomers = Customer.objects.all().count()
+    # totalCustomers = OrderItems.objects.filter(product__vendor__id=vendor_id).values('order__customer').count()
+    totalOrders = OrderItems.objects.all().distinct().count()
+    
+    context = {
+        'totalOrders': totalOrders,
+        'totalCustomers': totalCustomers,
+        'totalVendors': totalVendors,
+    }
+    return JsonResponse(context)
+
+
+
+@api_view(['DELETE'])
+# @permission_classes(IsAdminUser)
+def delete_vendor(request, pk):
+    try:
+        vendor = Vendor.objects.get(pk=pk)
+    except Vendor.DoesNotExist:
+        return Response({'detail': 'Vendor not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+    vendor.delete()
+    return Response({'detail': 'Vendor deleted successfully.'}, status=status.HTTP_204_NO_CONTENT)
