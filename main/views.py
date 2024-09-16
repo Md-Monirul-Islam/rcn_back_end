@@ -18,7 +18,7 @@ from rest_framework import status
 from django.contrib.auth import logout
 from rest_framework.decorators import api_view,permission_classes
 from django.views.decorators.csrf import csrf_exempt
-from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly,AllowAny
+from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly,AllowAny,IsAdminUser
 from django.shortcuts import get_object_or_404
 from rest_framework.exceptions import NotAuthenticated
 from django.db.models import Count
@@ -938,7 +938,7 @@ class ProductRatingViewSet(viewsets.ModelViewSet):
 
 ################### product Category ###################
 
-class CategoryList(generics.ListCreateAPIView):
+class CategoryList(generics.ListAPIView):
     queryset = ProductCategory.objects.all()
     serializer_class = CategorySerializer
 
@@ -949,6 +949,13 @@ class CategoryList(generics.ListCreateAPIView):
             qs = qs.annotate(downloads=Count('category_product'))
             qs = qs[:int(limit)]
         return qs
+    
+
+
+class AddCategory(generics.ListCreateAPIView):
+    queryset = ProductCategory.objects.all()
+    serializer_class = CategorySerializer
+    permission_classes = [IsAuthenticated,IsAdminUser]
 
 
 class CategoryDetail(generics.RetrieveUpdateDestroyAPIView):

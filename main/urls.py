@@ -54,6 +54,8 @@ urlpatterns = [
 
     ######## Product Category ########
     path('categories/',views.CategoryList.as_view(),name='categories'),
+
+    path('add-category/',views.AddCategory.as_view(),name='categories'),
     
     path('category/<int:pk>/',views.CategoryDetail.as_view(),name='category_detail'),
 
