@@ -118,6 +118,7 @@ urlpatterns = [
     path('admin-dashboard/',views.admin_dashboard,name='admin_dashboard'),
     path('superuser-login/', views.SuperuserLoginView.as_view(), name='superuser-login'),
     path('delete-vendor/<int:pk>/', views.delete_vendor, name='delete_vendor'),
+    path('orders-show-for-admin/',views.OrderListForAdminView.as_view(),name='order_list'),
 
 
 ]

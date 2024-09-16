@@ -571,12 +571,14 @@ class RelatedProductList(generics.ListCreateAPIView):
 class CustomerList(generics.ListCreateAPIView):
     queryset = Customer.objects.all()
     serializer_class = CustomerSerializer
+    permission_classes = [IsAuthenticated, IsAdminUser]
     
 
 
 class CustomerDetails(generics.RetrieveUpdateDestroyAPIView):
     queryset = Customer.objects.all()
     serializer_class = CustomerSerializer
+    permission_classes = [IsAuthenticated, IsAdminUser]
 
 
 class UserDetails(generics.RetrieveUpdateDestroyAPIView):
@@ -1297,3 +1299,11 @@ def delete_vendor(request, pk):
 
     vendor.delete()
     return Response({'detail': 'Vendor deleted successfully.'}, status=status.HTTP_204_NO_CONTENT)
+
+
+
+class OrderListForAdminView(generics.ListCreateAPIView):
+    queryset = Order.objects.all().order_by('-id')
+    serializer_class = OrderSerializer
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
