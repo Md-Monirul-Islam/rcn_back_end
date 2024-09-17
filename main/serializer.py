@@ -404,3 +404,15 @@ class SuperuserLoginSerializer(serializers.Serializer):
             return user
         else:
             raise serializers.ValidationError("Invalid credentials or not a superuser.")
+        
+
+from django.db.models import Count
+class ProductSerializer(serializers.ModelSerializer):
+    order_count = serializers.SerializerMethodField()
+    class Meta:
+        model = Product
+        fields = ['id','category','vendor','title','slug','tags','detail','price','usd_price','demo_url','product_ratings','image','product_file','downloads','publish_status','product_image','hot_deal','order_count']
+
+    def get_order_count(self, obj):
+        # Get the count of OrderItems for this product
+        return OrderItems.objects.filter(product=obj).aggregate(count=Count('id'))['count']

@@ -120,7 +120,7 @@ urlpatterns = [
     path('delete-vendor/<int:pk>/', views.delete_vendor, name='delete_vendor'),
     path('orders-show-for-admin/',views.OrderListForAdminView.as_view(),name='order_list'),
     path('customer/<int:customer_id>/order-items/',views.CustomerOrderItemListShowForAdmin.as_view(),name="customer_order_item_show_for_admin"),
-
+    path('vendor/<int:vendor_id>/ordered-products/', views.VendorOrderedProductsListView.as_view(), name='vendor_ordered_products_list'),
 
 ]
 urlpatterns += router.urls

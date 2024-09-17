@@ -1327,9 +1327,28 @@ class OrderListForAdminView(generics.ListCreateAPIView):
 class CustomerOrderItemListShowForAdmin(generics.ListAPIView):
     queryset = OrderItems.objects.all()
     serializer_class = OrderItemSerializer
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         qs = super().get_queryset()
         customer_id = self.kwargs['customer_id']
         qs = qs.filter(order__customer__id=customer_id)
         return qs
+    
+
+
+class VendorOrderedProductsListView(generics.ListAPIView):
+    serializer_class = ProductSerializer
+
+    def get_queryset(self):
+        vendor_id = self.kwargs['vendor_id']
+        # Get all products for the vendor
+        products = Product.objects.filter(vendor_id=vendor_id)
+        
+        # Get ordered products for this vendor
+        ordered_product_ids = OrderItems.objects.filter(product__vendor_id=vendor_id).values_list('product_id', flat=True).distinct()
+        
+        # Filter products to include only those that have been ordered
+        ordered_products = products.filter(id__in=ordered_product_ids)
+        
+        return ordered_products
