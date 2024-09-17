@@ -1337,18 +1337,42 @@ class CustomerOrderItemListShowForAdmin(generics.ListAPIView):
     
 
 
+#It's ok
+# class VendorOrderedProductsListView(generics.ListAPIView):
+#     serializer_class = ProductSerializer
+
+#     def get_queryset(self):
+#         vendor_id = self.kwargs['vendor_id']
+#         # Get all products for the vendor
+#         products = Product.objects.filter(vendor_id=vendor_id).order_by('-id')
+        
+#         # Get ordered products for this vendor
+#         ordered_product_ids = OrderItems.objects.filter(product__vendor_id=vendor_id).values_list('product_id', flat=True).distinct()
+        
+#         # Filter products to include only those that have been ordered
+#         ordered_products = products.filter(id__in=ordered_product_ids)
+        
+#         return ordered_products
+
+
 class VendorOrderedProductsListView(generics.ListAPIView):
     serializer_class = ProductSerializer
 
     def get_queryset(self):
         vendor_id = self.kwargs['vendor_id']
+        
         # Get all products for the vendor
-        products = Product.objects.filter(vendor_id=vendor_id)
+        products = Product.objects.filter(vendor_id=vendor_id).order_by('-id')
         
-        # Get ordered products for this vendor
-        ordered_product_ids = OrderItems.objects.filter(product__vendor_id=vendor_id).values_list('product_id', flat=True).distinct()
+        # Subquery to count confirmed orders for each product
+        confirmed_orders_subquery = OrderItems.objects.filter(
+            product=OuterRef('pk'),
+            order__order_status='Confirm'
+        ).values('product').annotate(order_count=Count('id')).values('order_count')
         
-        # Filter products to include only those that have been ordered
-        ordered_products = products.filter(id__in=ordered_product_ids)
+        # Annotate products with the count of confirmed orders
+        products_with_counts = products.annotate(
+            order_count=Subquery(confirmed_orders_subquery)
+        )
         
-        return ordered_products
+        return products_with_counts

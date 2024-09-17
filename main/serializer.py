@@ -2,6 +2,7 @@ import datetime
 from rest_framework import serializers, generics
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
+from django.db.models import Count
 from .models import Product, ProductCategory, ProductImage, Transaction, Vendor,Customer,Order,OrderItems,CustomerAddress, ProductRating, WishList
 
 
@@ -111,10 +112,16 @@ class ProductDetailSerializer(serializers.ModelSerializer):
 
 class CustomerSerializer(serializers.ModelSerializer):
     user = UserSerializer()
+    orders = serializers.SerializerMethodField()
 
     class Meta:
         model = Customer
-        fields = ['id', 'user', 'profile_image', 'phone']
+        fields = ['id', 'user', 'profile_image', 'phone','orders']
+
+    def get_orders(self, customer):
+        # Get all OrderItems related to this customer and include order details
+        order_items = OrderItems.objects.filter(order__customer=customer).select_related('order')
+        return OrderItemSerializer(order_items, many=True).data
 
     def update(self, instance, validated_data):
         user_data = validated_data.pop('user', None)
@@ -406,13 +413,20 @@ class SuperuserLoginSerializer(serializers.Serializer):
             raise serializers.ValidationError("Invalid credentials or not a superuser.")
         
 
-from django.db.models import Count
+
 class ProductSerializer(serializers.ModelSerializer):
     order_count = serializers.SerializerMethodField()
+    customers = serializers.SerializerMethodField()
     class Meta:
         model = Product
-        fields = ['id','category','vendor','title','slug','tags','detail','price','usd_price','demo_url','product_ratings','image','product_file','downloads','publish_status','product_image','hot_deal','order_count']
+        fields = ['id','category','vendor','title','slug','tags','detail','price','usd_price','demo_url','product_ratings','image','product_file','downloads','publish_status','product_image','hot_deal','order_count','customers']
 
     def get_order_count(self, obj):
         # Get the count of OrderItems for this product
         return OrderItems.objects.filter(product=obj).aggregate(count=Count('id'))['count']
+
+    def get_customers(self, obj):
+        # Get customers who have ordered this product
+        order_items = OrderItems.objects.filter(product=obj).select_related('order__customer')
+        customers = set(order_item.order.customer for order_item in order_items)
+        return CustomerSerializer(customers, many=True).data
