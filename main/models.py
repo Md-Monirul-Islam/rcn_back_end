@@ -75,21 +75,34 @@ class Customer(models.Model):
         return self.user.username
     
 
+
+Order_STATUS = (
+    ('Confirm', 'Confirm'),
+    ('Delivered', 'Delivered'),
+    ('Cancelled', 'Cancelled'),
+)
+PAYMENT_METHOD_CHOICES = (
+    ('Online Payment', 'Online Payment'),
+    ('Cash on Delivery', 'Cash on Delivery'),
+)
+SELECT_COURIER = (
+    ('Sundarban Courier Service (SCS)', 'Sundarban Courier Service (SCS)'),
+    ('Karatoa Courier Service (KCS)', 'Karatoa Courier Service (KCS)'),
+    ('Afzal parcel & courier', 'Afzal parcel & courier'),
+    ('RedX', 'RedX'),
+    ('eCourier', 'eCourier'),
+    ('Pathao Courier', 'Pathao Courier'),
+    ('Delivery Tiger', 'Delivery Tiger'),
+    ('Janani Express Parcel Service', 'Janani Express Parcel Service'),
+    ('Sheba Delivery', 'Sheba Delivery'),
+)
 class Order(models.Model):
-    Order_STATUS = (
-        ('Confirm', 'Confirm'),
-        ('Delivered', 'Delivered'),
-        ('Cancelled', 'Cancelled'),
-    )
-    PAYMENT_METHOD_CHOICES = (
-        ('Online Payment', 'Online Payment'),
-        ('Cash on Delivery', 'Cash on Delivery'),
-    )
     customer = models.ForeignKey(Customer,on_delete=models.CASCADE,related_name='customer_order')
     order_time = models.DateTimeField(auto_now_add=True)
     order_status = models.CharField(max_length=200,blank=True,null=True,choices=Order_STATUS)
     total_amount = models.DecimalField(max_digits=10,decimal_places=2,default=0)
     payment_method = models.CharField(max_length=50, choices=PAYMENT_METHOD_CHOICES, default='Online Payment')
+    select_courier = models.CharField(max_length=50, choices=SELECT_COURIER,blank=True,null=True)
 
     def __str__(self):
         return f"Order #{self.pk} - {str(self.order_time)}"

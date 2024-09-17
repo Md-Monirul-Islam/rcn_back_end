@@ -609,6 +609,11 @@ class SubmitOrder(APIView):
         cart_data = request.data.get('cart_items', [])
         total_amount = 0
         payment_method = request.data.get('payment_method', 'Online Payment')
+        select_courier = request.data.get('select_courier', None)  # Get selected courier from the request
+
+        # Validate the courier selection
+        if not select_courier:
+            return Response({'error': 'Please select a courier service.'}, status=status.HTTP_400_BAD_REQUEST)
 
         # Calculate the total amount on the backend
         for item in cart_data:
@@ -627,8 +632,9 @@ class SubmitOrder(APIView):
         order = Order.objects.create(
             customer=customer,
             total_amount=total_amount,
-            order_status=order_status,  # Set based on payment method
-            payment_method=payment_method
+            order_status=order_status,
+            payment_method=payment_method,
+            select_courier=select_courier  # Save the selected courier
         )
 
         # Create OrderItems for each product in the cart
@@ -636,7 +642,7 @@ class SubmitOrder(APIView):
             product_id = item.get('product_id')
             quantity = item.get('quantity', 1)
             product = Product.objects.get(id=product_id)
-            
+
             # Create order item
             OrderItems.objects.create(
                 order=order,
@@ -648,7 +654,6 @@ class SubmitOrder(APIView):
         # Serialize and return the response
         order_serializer = OrderSerializer(order)
         return Response(order_serializer.data, status=status.HTTP_201_CREATED)
-
 
     
 
