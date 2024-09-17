@@ -139,15 +139,24 @@ class CustomerDetails(generics.RetrieveUpdateDestroyAPIView):
 
 class OrderItemSerializer(serializers.ModelSerializer):
     order_status = serializers.CharField(source='order.order_status', read_only=True)
+    order = serializers.PrimaryKeyRelatedField(read_only=True)  # Ensure order is serialized as its primary key
+    
     class Meta:
         model = OrderItems
         fields = '__all__'
-        # Removed depth to avoid recursive serialization
 
     def to_representation(self, instance):
         response = super().to_representation(instance)
-        # Explicitly serialize related fields without recursion
+        # Serialize product details
         response['product'] = ProductDetailSerializer(instance.product, context=self.context).data
+        # Serialize customer details from the order
+        response['customer'] = {
+            'customer_id': instance.order.customer.user.id,
+            'first_name': instance.order.customer.user.first_name,
+            'last_name': instance.order.customer.user.last_name,
+            'email': instance.order.customer.user.email,
+            'phone': instance.order.customer.phone,
+        }
         return response
 
 
