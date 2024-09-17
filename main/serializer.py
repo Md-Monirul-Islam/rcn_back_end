@@ -145,10 +145,22 @@ class OrderItemSerializer(serializers.ModelSerializer):
         model = OrderItems
         fields = '__all__'
 
+    def get_customer_address(self, customer):
+        # Optionally, you could filter to get only the default address
+        address = customer.customer_address.filter(default_address=True).first()
+        if address:
+            return {
+                'address': address.address,
+                'city': address.city,
+                'post': address.post,
+            }
+        return None
+
     def to_representation(self, instance):
         response = super().to_representation(instance)
         # Serialize product details
         response['product'] = ProductDetailSerializer(instance.product, context=self.context).data
+        customer = instance.order.customer
         # Serialize customer details from the order
         response['customer'] = {
             'customer_id': instance.order.customer.user.id,
@@ -156,6 +168,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
             'last_name': instance.order.customer.user.last_name,
             'email': instance.order.customer.user.email,
             'phone': instance.order.customer.phone,
+            'address': self.get_customer_address(customer),
         }
         return response
 
