@@ -1387,7 +1387,7 @@ def search_orders_by_date(request):
     if order_date:
         # Parse the date and filter orders by the date
         order_date_parsed = parse_date(order_date)
-        orders = Order.objects.filter(order_time__date=order_date_parsed)
+        orders = Order.objects.filter(order_time__date=order_date_parsed).order_by('-id')
         
         # Serialize the orders
         serializer = OrderSerializer(orders, many=True)
