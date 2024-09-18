@@ -33,7 +33,7 @@ from decimal import Decimal, InvalidOperation
 from django.core.exceptions import ValidationError
 from decimal import Decimal
 from rest_framework_simplejwt.views import TokenObtainPairView
-from main.permissions import IsSuperuser
+from django.utils.dateparse import parse_date
 
 # Create your views here.
 
@@ -1376,3 +1376,21 @@ class VendorOrderedProductsListView(generics.ListAPIView):
         )
         
         return products_with_counts
+    
+
+
+@api_view(['GET'])
+def search_orders_by_date(request):
+    # Get the date parameter from the query string
+    order_date = request.query_params.get('date', None)
+    
+    if order_date:
+        # Parse the date and filter orders by the date
+        order_date_parsed = parse_date(order_date)
+        orders = Order.objects.filter(order_time__date=order_date_parsed)
+        
+        # Serialize the orders
+        serializer = OrderSerializer(orders, many=True)
+        return Response({'data': serializer.data}, status=200)
+    
+    return Response({'error': 'Invalid date'}, status=400)
