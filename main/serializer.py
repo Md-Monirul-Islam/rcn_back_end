@@ -147,7 +147,6 @@ class CustomerDetails(generics.RetrieveUpdateDestroyAPIView):
 class OrderItemSerializer(serializers.ModelSerializer):
     order_status = serializers.CharField(source='order.order_status', read_only=True)
     order = serializers.PrimaryKeyRelatedField(read_only=True)  # Ensure order is serialized as its primary key
-    product = ProductListSerializer()
     
     class Meta:
         model = OrderItems

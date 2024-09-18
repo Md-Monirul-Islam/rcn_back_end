@@ -122,6 +122,7 @@ urlpatterns = [
     path('customer/<int:customer_id>/order-items/',views.CustomerOrderItemListShowForAdmin.as_view(),name="customer_order_item_show_for_admin"),
     path('vendor/<int:vendor_id>/ordered-products/', views.VendorOrderedProductsListView.as_view(), name='vendor_ordered_products_list'),
     path('orders-search-by-date/', views.search_orders_by_date, name='search_orders_by_date'),
+    path('vendor/<int:vendor_id>/search-orders/', views.VendorDateWiseOrderSearch.as_view(), name='vendor-datewise-orders'),
 
 ]
 urlpatterns += router.urls

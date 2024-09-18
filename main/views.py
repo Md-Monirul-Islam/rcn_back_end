@@ -1394,3 +1394,29 @@ def search_orders_by_date(request):
         return Response({'data': serializer.data}, status=200)
     
     return Response({'error': 'Invalid date'}, status=400)
+
+
+
+from datetime import datetime
+
+class VendorDateWiseOrderSearch(APIView):
+    # permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        selected_date = request.GET.get('date')
+        if selected_date:
+            try:
+                # Convert string to date object
+                selected_date_obj = datetime.strptime(selected_date, '%Y-%m-%d').date()
+            except ValueError:
+                return Response({"error": "Invalid date format"}, status=400)
+            
+            # Filter orders by the selected date
+            orders = Order.objects.filter(order_time__date=selected_date_obj)
+        else:
+            # Handle case where no date is provided
+            orders = Order.objects.all()
+        
+        # Serialize and return the data
+        serializer = OrderSerializer(orders, many=True)
+        return Response({"data": serializer.data})
