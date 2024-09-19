@@ -207,6 +207,21 @@ class Transaction(models.Model):
 
     def __str__(self):
         return f"{self.transaction_id} - {self.status}"
+    
+
+
+class SentEmail(models.Model):
+    recipient = models.EmailField()
+    subject = models.CharField(max_length=255)
+    message = models.TextField()
+    sent_at = models.DateTimeField(auto_now_add=True)
+
+    # Foreign keys to relate the email to a customer and vendor
+    customer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_emails')
+    vendor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_emails')
+
+    def __str__(self):
+        return f'Email to {self.recipient} from Vendor {self.vendor.username}'
 
 
 

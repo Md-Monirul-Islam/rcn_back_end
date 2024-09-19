@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Order Confirmation</title>
+</head>
+<body>
+    <p>Dear {{ customer_name }},</p>
+
+    <p>We are thrilled to let you know that your order ID <strong>#{{ order_number }}</strong> has been successfully received({{payment_method}})! Thank you for choosing {{ shop_name }} to fulfill your shopping needs.</p>
+
+    <h3>Order Details:</h3>
+    <ul>
+        {% for product in product_list %}
+        <li>
+            <img src="{{ product.image }}" style="width: 50px; height: 50px;">
+            {{ product.title }} - Tk. {{ product.price }}
+        </li>
+        {% endfor %}
+    </ul>
+
+    <p>Order Number: <strong>#{{ order_number }}</strong></p>
+    <p>Order Date: {{ order_date }}</p>
+
+    <p>We are now processing your order and will notify you once it has been shipped. You can track the status of your order through your account on our website.</p>
+
+    <p>We truly appreciate your business and are excited for you to receive your purchase! Should you have any questions or need further assistance, please don't hesitate to reach out to us.</p>
+
+    <p>Thank you again for choosing {{ vendor_name }}, and we look forward to serving you in the future!</p>
+
+    <p>Warm regards,</p>
+    <p>{{ vendor_name }}<br>
+    Email: {{ vendor_email }}<br>
+    Phone: {{ vendor_phone }}<br>
+    <a href="http://localhost:3000/">Your Website</a></p>
+</body>
+</html>

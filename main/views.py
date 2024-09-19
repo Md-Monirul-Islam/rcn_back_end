@@ -601,6 +601,11 @@ class OrderList(generics.ListAPIView):
 
 
 
+from django.core.mail import send_mail
+from django.conf import settings
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
+
 class SubmitOrder(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -617,16 +622,22 @@ class SubmitOrder(APIView):
 
         # Calculate the total amount on the backend
         first_vendor = None
+        product_list = []
         for item in cart_data:
             product_id = item.get('product_id')
             quantity = item.get('quantity', 1)
             product = Product.objects.get(id=product_id)
-            
-            # Set the vendor to the first product's vendor (assuming all products are from the same vendor)
+
+            # Set the vendor to the first product's vendor
             if not first_vendor:
                 first_vendor = product.vendor
 
             total_amount += product.price * quantity
+            product_list.append({
+                'title': product.title,
+                'price': product.price,
+                'image': product.image.url
+            })
 
         # Set order status based on payment method
         if payment_method == 'mobile-banking':
@@ -634,10 +645,10 @@ class SubmitOrder(APIView):
         else:
             order_status = 'Pending'
 
-        # Create a new Order and associate it with the first vendor from the cart items
+        # Create the Order and associate it with the first vendor
         order = Order.objects.create(
             customer=customer,
-            vendor=first_vendor,  # Save the vendor
+            vendor=first_vendor,
             total_amount=total_amount,
             order_status=order_status,
             payment_method=payment_method,
@@ -650,7 +661,6 @@ class SubmitOrder(APIView):
             quantity = item.get('quantity', 1)
             product = Product.objects.get(id=product_id)
 
-            # Create order item
             OrderItems.objects.create(
                 order=order,
                 product=product,
@@ -658,10 +668,48 @@ class SubmitOrder(APIView):
                 price=product.price
             )
 
+        # Send confirmation email
+        customer_email = customer.user.email
+        vendor = first_vendor.user  # Get the associated vendor user
+        vendor_name = vendor.username
+        vendor_email = vendor.email
+        vendor_phone = first_vendor.phone
+
+        # Email subject
+        subject = 'Thank You for Your Purchase! Order Confirmation'
+
+        # Render email body using a template (you can also construct it in plain text if you prefer)
+        context = {
+            'customer_name': customer.user.first_name,
+            'order_number': order.id,
+            'order_date': order.order_time,
+            'product_list': product_list,
+            'vendor_name': vendor_name,
+            'vendor_email': vendor_email,
+            'vendor_phone': vendor_phone,
+            'payment_method':payment_method
+            # 'shop_name': 'Your Shop Name'
+        }
+
+        # Prepare the email message
+        html_message = render_to_string('order_confirmation_email.html', context)
+        plain_message = strip_tags(html_message)
+
+        recipient_list = [customer_email]
+        send_mail(subject, plain_message, settings.DEFAULT_FROM_EMAIL, recipient_list, html_message=html_message)
+
+        # Save the sent email details in the SentEmail model
+        SentEmail.objects.create(
+            recipient=customer_email,
+            subject=subject,
+            message=plain_message,
+            customer=customer.user,  # Link the customer
+            vendor=vendor  # Link the vendor's user
+        )
+
         # Serialize and return the response
         order_serializer = OrderSerializer(order)
         return Response(order_serializer.data, status=status.HTTP_201_CREATED)
-
     
 
 #### Order Items

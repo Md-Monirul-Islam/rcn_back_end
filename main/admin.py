@@ -43,3 +43,4 @@ class WishListAdmin(admin.ModelAdmin):
     list_display = ['id','product','customer']
 admin.site.register(WishList,WishListAdmin)
 admin.site.register(Transaction)
+admin.site.register(SentEmail)
