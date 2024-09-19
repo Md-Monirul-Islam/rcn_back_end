@@ -609,17 +609,23 @@ class SubmitOrder(APIView):
         cart_data = request.data.get('cart_items', [])
         total_amount = 0
         payment_method = request.data.get('payment_method', 'Online Payment')
-        select_courier = request.data.get('select_courier', None)  # Get selected courier from the request
+        select_courier = request.data.get('select_courier', None)
 
         # Validate the courier selection
         if not select_courier:
             return Response({'error': 'Please select a courier service.'}, status=status.HTTP_400_BAD_REQUEST)
 
         # Calculate the total amount on the backend
+        first_vendor = None
         for item in cart_data:
             product_id = item.get('product_id')
             quantity = item.get('quantity', 1)
             product = Product.objects.get(id=product_id)
+            
+            # Set the vendor to the first product's vendor (assuming all products are from the same vendor)
+            if not first_vendor:
+                first_vendor = product.vendor
+
             total_amount += product.price * quantity
 
         # Set order status based on payment method
@@ -628,13 +634,14 @@ class SubmitOrder(APIView):
         else:
             order_status = 'Pending'
 
-        # Create a new Order
+        # Create a new Order and associate it with the first vendor from the cart items
         order = Order.objects.create(
             customer=customer,
+            vendor=first_vendor,  # Save the vendor
             total_amount=total_amount,
             order_status=order_status,
             payment_method=payment_method,
-            select_courier=select_courier  # Save the selected courier
+            select_courier=select_courier
         )
 
         # Create OrderItems for each product in the cart
@@ -1400,9 +1407,7 @@ def search_orders_by_date(request):
 from datetime import datetime
 
 class VendorDateWiseOrderSearch(APIView):
-    # permission_classes = [IsAuthenticated]
-
-    def get(self, request, *args, **kwargs):
+    def get(self, request, vendor_id, *args, **kwargs):
         selected_date = request.GET.get('date')
         if selected_date:
             try:
@@ -1411,12 +1416,12 @@ class VendorDateWiseOrderSearch(APIView):
             except ValueError:
                 return Response({"error": "Invalid date format"}, status=400)
             
-            # Filter orders by the selected date
-            orders = Order.objects.filter(order_time__date=selected_date_obj)
+            # Filter orders by the selected date and vendor
+            order_items = OrderItems.objects.filter(order__vendor_id=vendor_id, order__order_time__date=selected_date_obj)
         else:
-            # Handle case where no date is provided
-            orders = Order.objects.all()
+            # Handle case where no date is provided, fetch all orders for the vendor
+            order_items = OrderItems.objects.filter(order__vendor_id=vendor_id)
         
         # Serialize and return the data
-        serializer = OrderSerializer(orders, many=True)
+        serializer = OrderItemSerializer(order_items, many=True)
         return Response({"data": serializer.data})
