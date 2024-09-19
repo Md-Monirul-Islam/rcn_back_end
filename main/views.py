@@ -687,7 +687,8 @@ class SubmitOrder(APIView):
             'vendor_name': vendor_name,
             'vendor_email': vendor_email,
             'vendor_phone': vendor_phone,
-            'payment_method':payment_method
+            'payment_method':payment_method,
+            'select_courier':select_courier,
             # 'shop_name': 'Your Shop Name'
         }
 
@@ -826,9 +827,64 @@ class OrderItemDetailS(generics.RetrieveUpdateDestroyAPIView):
 
 
 #Order update
+# class OrderModify(generics.RetrieveUpdateAPIView):
+#     queryset = Order.objects.all()
+#     serializer_class = OrderSerializer
+
 class OrderModify(generics.RetrieveUpdateAPIView):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', True)  # Allow partial updates
+        instance = self.get_object()  # Get the current order instance
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+
+        if serializer.is_valid():
+            # Get the old status and the new status
+            old_status = instance.order_status
+            new_status = serializer.validated_data.get('order_status', old_status)
+
+            # Update the order instance
+            self.perform_update(serializer)
+
+            # Prepare email details if the status has changed
+            if old_status != new_status:
+                subject = ''
+                html_message = ''
+                context = {
+                    'customer_name': f'{instance.customer.user.first_name} {instance.customer.user.last_name}',
+                    'order_number': instance.id,
+                    'vendor_name': instance.vendor.user.username,
+                    'vendor_email': instance.vendor.user.email,
+                    'vendor_phone': instance.vendor.phone,
+                    'order_date': instance.order_time.strftime('%Y-%m-%d %H:%M:%S'),  # Format as needed
+                    # Add any other context variables needed for your templates
+                }
+
+                if new_status == 'Confirm':
+                    subject = 'Order Confirmation'
+                    html_message = render_to_string('order_confirmation_email.html', context)
+                elif new_status == 'Delivered':
+                    subject = 'Order Delivered'
+                    html_message = render_to_string('order_delivered_email.html', context)
+                elif new_status == 'Cancelled':
+                    subject = 'Order Cancelled'
+                    html_message = render_to_string('order_cancelled_email.html', context)
+
+                # Send the email
+                send_mail(
+                    subject,
+                    message='',  # No plain text message
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[instance.customer.user.email],
+                    html_message=html_message,
+                    fail_silently=False,
+                )
+
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 
@@ -1473,3 +1529,71 @@ class VendorDateWiseOrderSearch(APIView):
         # Serialize and return the data
         serializer = OrderItemSerializer(order_items, many=True)
         return Response({"data": serializer.data})
+    
+
+
+ORDER_STATUS = (
+    ('Confirm', 'Confirm'),
+    ('Delivered', 'Delivered'),
+    ('Cancelled', 'Cancelled'),
+)
+
+@api_view(['PATCH'])
+def change_order_status(request, order_id):
+    order = get_object_or_404(Order, id=order_id)
+    new_status = request.data.get('order_status')
+
+    # Validate the new status
+    if new_status not in dict(ORDER_STATUS):
+        return Response({'error': 'Invalid status'}, status=400)
+
+    # Update order status
+    order.order_status = new_status
+    order.save()
+
+    # Prepare email details
+    subject = ""
+    html_message = ""
+    context = {
+        'customer_name': order.customer.first_name + " " + order.customer.last_name,
+        'order_number': order.id,
+        'payment_method': order.payment_method,  # Adjust as necessary
+        'shop_name': "Your Shop Name",  # Replace with your shop name variable
+        'product_list': order.order_items.all(),  # Adjust to get the list of products
+        'vendor_name': order.vendor.username,
+        'vendor_email': order.vendor.email,
+        'vendor_phone': order.vendor.phone,
+        'order_date': order.order_time,  # Adjust to your order date field
+    }
+
+    if new_status == 'Confirm':
+        subject = 'Order Confirmation'
+        html_message = render_to_string('order_confirmation_email.html', context)
+    elif new_status == 'Delivered':
+        subject = 'Order Delivered'
+        html_message = render_to_string('order_delivered_email.html', context)
+    elif new_status == 'Cancelled':
+        subject = 'Order Cancelled'
+        html_message = render_to_string('order_cancelled_email.html', context)
+
+    if subject and html_message:
+        # Send the email
+        send_mail(
+            subject,
+            strip_tags(html_message),  # Text version of the email
+            settings.DEFAULT_FROM_EMAIL,
+            [order.customer.email],
+            html_message=html_message,
+            fail_silently=False,
+        )
+
+        # Save the email details to the SentEmail model
+        SentEmail.objects.create(
+            recipient=order.customer.email,
+            subject=subject,
+            message=html_message,
+            customer=order.customer,
+            vendor=order.vendor,  # Assuming `order` has a vendor field
+        )
+
+    return Response({'status': 'success', 'message': f'Order status changed to {new_status} and email sent.'})

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Order Cancelled</title>
+</head>
+<body>
+    <p>Dear {{ customer_name }},</p>
+
+    <p>We regret to inform you that your order ID <strong>#{{ order_number }}</strong> has been cancelled. If you believe this is an error, please contact us for assistance.</p>
+
+    <h3>Order Details:</h3>
+    <ul>
+        {% for product in product_list %}
+        <li>
+            <img src="{{ product.image.url }}" style="width: 50px; height: 50px;">
+            {{ product.title }} - Tk. {{ product.price }}
+        </li>
+        {% endfor %}
+    </ul>
+
+    <p>Order Number: <strong>#{{ order_number }}</strong></p>
+    <p>Order Date: {{ order_date }}</p>
+
+    <p>We apologize for any inconvenience this may have caused and hope to serve you better in the future.</p>
+
+    <p>Warm regards,</p>
+    <p>{{ vendor_name }}<br>
+    Email: {{ vendor_email }}<br>
+    Phone: {{ vendor_phone }}<br>
+    <a href="http://localhost:3000/">Your Website</a></p>
+</body>
+</html>

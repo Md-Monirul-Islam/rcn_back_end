@@ -7,13 +7,19 @@
 <body>
     <p>Dear {{ customer_name }},</p>
 
-    <p>We are thrilled to let you know that your order ID <strong>#{{ order_number }}</strong> has been successfully received({{payment_method}})! Thank you for choosing {{ shop_name }} to fulfill your shopping needs.</p>
+    <p>We are thrilled to let you know that your order ID <strong>#{{ order_number }}</strong> has been successfully received({{payment_method}})! Thank you for choosing {{ shop_name }} to fulfill your shopping needs.
+        {% if select_courier %}
+        Your selected courier is {{ select_courier }}.
+        {% else %}
+            You have not preferred any courier.
+        {% endif %}
+    </p>
 
     <h3>Order Details:</h3>
     <ul>
         {% for product in product_list %}
         <li>
-            <img src="{{ product.image }}" style="width: 50px; height: 50px;">
+            <img src="{{ product.image.url }}" style="width: 50px; height: 50px;">
             {{ product.title }} - Tk. {{ product.price }}
         </li>
         {% endfor %}

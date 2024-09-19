@@ -107,6 +107,9 @@ class Order(models.Model):
 
     def __str__(self):
         return f"Order #{self.pk} - {str(self.order_time)}"
+    
+    class Meta:
+        ordering = ('-id',)
 
 
 
@@ -119,6 +122,9 @@ class OrderItems(models.Model):
 
     def __str__(self):
         return self.product.title
+    
+    class Meta:
+        ordering = ('-id',)
     
     # @property
     # def show_daily_order_report_chart(self):
