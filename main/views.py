@@ -34,6 +34,11 @@ from django.core.exceptions import ValidationError
 from decimal import Decimal
 from rest_framework_simplejwt.views import TokenObtainPairView
 from django.utils.dateparse import parse_date
+from django.core.mail import send_mail
+from django.conf import settings
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
+from datetime import datetime
 
 # Create your views here.
 
@@ -601,11 +606,6 @@ class OrderList(generics.ListAPIView):
 
 
 
-from django.core.mail import send_mail
-from django.conf import settings
-from django.template.loader import render_to_string
-from django.utils.html import strip_tags
-
 class SubmitOrder(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -834,6 +834,7 @@ class OrderItemDetailS(generics.RetrieveUpdateDestroyAPIView):
 class OrderModify(generics.RetrieveUpdateAPIView):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
+    permission_classes = [IsAuthenticated]
 
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', True)  # Allow partial updates
@@ -1490,7 +1491,9 @@ class VendorOrderedProductsListView(generics.ListAPIView):
     
 
 
+#For admin search
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def search_orders_by_date(request):
     # Get the date parameter from the query string
     order_date = request.query_params.get('date', None)
@@ -1508,7 +1511,35 @@ def search_orders_by_date(request):
 
 
 
-from datetime import datetime
+#For vendor search
+class VendorOrderSearchView(APIView):
+    def get(self, request, vendor_id):
+        # Get the 'id' from query parameters for searching
+        order_id = request.query_params.get('id', None)
+
+        if order_id:
+            try:
+                # Filter the orders by the provided 'id' and vendor_id
+                order = Order.objects.filter(id=order_id, vendor_id=vendor_id).first()
+                
+                if not order:
+                    return Response({'detail': 'Order not found'}, status=404)
+
+            except ValueError:
+                return Response({'detail': 'Invalid order ID'}, status=400)
+            
+            # Serialize the single order
+            serializer = OrderSerializer(order)
+            return Response({'data': [serializer.data]}, status=200)  # Return a list with the matching order
+        
+        else:
+            # If no 'id' is provided, return all orders for the vendor
+            orders = Order.objects.filter(vendor_id=vendor_id)
+            serializer = OrderSerializer(orders, many=True)
+            return Response({'data': serializer.data}, status=200)
+
+
+
 
 class VendorDateWiseOrderSearch(APIView):
     def get(self, request, vendor_id, *args, **kwargs):
@@ -1539,6 +1570,7 @@ ORDER_STATUS = (
 )
 
 @api_view(['PATCH'])
+@permission_classes([IsAuthenticated])
 def change_order_status(request, order_id):
     order = get_object_or_404(Order, id=order_id)
     new_status = request.data.get('order_status')

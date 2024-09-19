@@ -123,6 +123,7 @@ urlpatterns = [
     path('vendor/<int:vendor_id>/ordered-products/', views.VendorOrderedProductsListView.as_view(), name='vendor_ordered_products_list'),
     path('orders-search-by-date/', views.search_orders_by_date, name='search_orders_by_date'),
     path('vendor/<int:vendor_id>/search-orders/', views.VendorDateWiseOrderSearch.as_view(), name='vendor-datewise-orders'),
+    path('search-orders/<int:vendor_id/', views.VendorOrderSearchView.as_view(), name='search_orders_by_id'),
 
 ]
 urlpatterns += router.urls
