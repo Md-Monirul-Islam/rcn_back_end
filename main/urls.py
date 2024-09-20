@@ -36,6 +36,12 @@ urlpatterns = [
     ######## Product ########
     path('products/',views.ProductList.as_view(),name='product-list'),
 
+    path('coupons/', views.AddCouponView.as_view(), name='add-coupon'),
+
+    path('coupons/<int:pk>/', views.CouponDetailView.as_view(), name='coupon-detail'),
+
+    path('apply-coupon/', views.apply_coupon, name='apply_coupon'),
+
     path('products/<str:tag>',views.TagProductList.as_view(),name='tag_product_list'),
     
     path('product/<int:pk>/',views.ProductDetail.as_view(),name='product_detail'),

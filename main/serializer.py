@@ -3,7 +3,7 @@ from rest_framework import serializers, generics
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 from django.db.models import Count
-from .models import Product, ProductCategory, ProductImage, Transaction, Vendor,Customer,Order,OrderItems,CustomerAddress, ProductRating, WishList
+from .models import Product, ProductCategory, ProductImage, Transaction, Vendor,Customer,Order,OrderItems,CustomerAddress, ProductRating, WishList, Coupon
 
 
 
@@ -87,6 +87,13 @@ class ProductListSerializer(serializers.ModelSerializer):
         def __init__(self,*args, **kwargs):
             super(ProductListSerializer,self).__init__(*args, **kwargs)
         # depth = 1
+
+
+
+class CouponCodeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Coupon
+        fields = ['id', 'code', 'discount_amount', 'is_active', 'expiration_date', 'products', 'vendor']
 
 
 class ProductImageSerializer(serializers.ModelSerializer):

@@ -44,3 +44,4 @@ class WishListAdmin(admin.ModelAdmin):
 admin.site.register(WishList,WishListAdmin)
 admin.site.register(Transaction)
 admin.site.register(SentEmail)
+admin.site.register(Coupon)

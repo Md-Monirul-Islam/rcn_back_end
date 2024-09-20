@@ -64,6 +64,36 @@ class Product(models.Model):
             return []
     # class Meta:
     #     ordering = ('-id',)
+
+    def get_final_price(self, coupon_code=None):
+        """
+        Calculate the final price of the product after applying a valid coupon.
+        """
+        final_price = self.price
+        if coupon_code:
+            try:
+                coupon = Coupon.objects.get(code=coupon_code, products=self, is_active=True)
+                if coupon.is_valid():
+                    final_price -= coupon.discount_amount
+            except Coupon.DoesNotExist:
+                pass  # Invalid coupon code
+        return final_price
+
+
+class Coupon(models.Model):
+    code = models.CharField(max_length=50, unique=True)
+    discount_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    is_active = models.BooleanField(default=True)
+    expiration_date = models.DateTimeField(null=True, blank=True)
+    products = models.ForeignKey(Product, related_name='coupons', on_delete=models.CASCADE)
+    vendor = models.ForeignKey(Vendor, related_name='coupons', on_delete=models.CASCADE)
+
+
+    def __str__(self):
+        return f"{self.code} - {self.discount_amount}"
+
+    def is_valid(self):
+        return self.is_active and (self.expiration_date is None or self.expiration_date > timezone.now())
         
 
 

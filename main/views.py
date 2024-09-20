@@ -234,6 +234,45 @@ class ProductList(generics.ListCreateAPIView):
         return qs
     
 
+
+class AddCouponView(generics.ListCreateAPIView):
+    queryset = Coupon.objects.all()
+    serializer_class = CouponCodeSerializer
+    permission_classes = [IsAuthenticated]
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        vendor = get_object_or_404(Vendor, user=user)
+        product_id = self.request.data.get('products')  # Expect a single product ID
+
+        # Check if the product belongs to the vendor
+        if product_id:
+            product = get_object_or_404(Product, id=product_id, vendor=vendor)
+            # Save the coupon with the vendor and product details
+            serializer.save(vendor=vendor, products=product)
+        else:
+            raise NotAuthenticated("Product must be specified.")
+
+class CouponDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Coupon.objects.all()
+    serializer_class = CouponCodeSerializer
+    # permission_classes = [IsAuthenticated]
+    
+
+
+def apply_coupon(request):
+    product_id = request.GET.get('product_id')
+    coupon_code = request.GET.get('coupon_code')
+
+    product = get_object_or_404(Product, id=product_id)
+    final_price = product.get_final_price(coupon_code=coupon_code)
+
+    return JsonResponse({
+        'final_price': final_price,
+        'discount_applied': product.price - final_price
+    })
+    
+
 # @permission_classes([IsAuthenticatedOrReadOnly])
 class VendorProductList(generics.ListCreateAPIView):
     queryset = Product.objects.all().order_by('-id')
