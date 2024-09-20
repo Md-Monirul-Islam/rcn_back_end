@@ -79,6 +79,7 @@ def vendor_register(request):
     last_name = request.POST.get('last_name')
     username = request.POST.get('username')
     email = request.POST.get('email')
+    shop_name = request.POST.get('shop_name')
     phone = request.POST.get('phone')
     address = request.POST.get('address')
     password = request.POST.get('password')
@@ -97,6 +98,7 @@ def vendor_register(request):
                 #Create vendor
                 vendor = Vendor.objects.create(
                     user=user,
+                    shop_name=shop_name,
                     phone=phone,
                     address=address,
                 )
@@ -671,9 +673,11 @@ class SubmitOrder(APIView):
         # Send confirmation email
         customer_email = customer.user.email
         vendor = first_vendor.user  # Get the associated vendor user
-        vendor_name = vendor.username
+        vendor_first_name = vendor.first_name
+        vendor_last_name = vendor.last_name
         vendor_email = vendor.email
         vendor_phone = first_vendor.phone
+        vendor_shop_name = first_vendor.shop_name
 
         # Email subject
         subject = 'Thank You for Your Purchase! Order Confirmation'
@@ -684,12 +688,13 @@ class SubmitOrder(APIView):
             'order_number': order.id,
             'order_date': order.order_time,
             'product_list': product_list,
-            'vendor_name': vendor_name,
+            'vendor_first_name': vendor_first_name,
+            'vendor_last_name':vendor_last_name,
             'vendor_email': vendor_email,
             'vendor_phone': vendor_phone,
             'payment_method':payment_method,
             'select_courier':select_courier,
-            # 'shop_name': 'Your Shop Name'
+            'vendor_shop_name':vendor_shop_name
         }
 
         # Prepare the email message
@@ -1445,7 +1450,7 @@ def delete_vendor(request, pk):
 
 
 
-class OrderListForAdminView(generics.ListCreateAPIView):
+class OrderListForAdminView(generics.ListAPIView):
     queryset = Order.objects.all().order_by('-id')
     serializer_class = OrderSerializer
     pagination_class = CustomPagination

@@ -6,6 +6,7 @@ from django.db.models import Count,Sum
 # Create your models here.
 class Vendor(models.Model):
     user = models.ForeignKey(User,on_delete=models.CASCADE)
+    shop_name = models.CharField(max_length=200,blank=True,null=True)
     phone = models.PositiveBigIntegerField(unique=True,blank=True,null=True)
     profile_image = models.ImageField(upload_to='seller_images/',blank=True,null=True)
     address = models.TextField(null=True,blank=True)
@@ -78,6 +79,7 @@ class Customer(models.Model):
 
 Order_STATUS = (
     ('Confirm', 'Confirm'),
+    ('Shipped', 'Shipped'),
     ('Delivered', 'Delivered'),
     ('Cancelled', 'Cancelled'),
 )

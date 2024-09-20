@@ -198,13 +198,13 @@ class OrderSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         response = super().to_representation(instance)
         # Serializing customer details explicitly
-        # response['customer'] = {
-        #     'customer_id': instance.customer.user.id,
-        #     'first_name': instance.customer.user.first_name,
-        #     'last_name': instance.customer.user.last_name,
-        #     'email': instance.customer.user.email,
-        #     'phone': instance.customer.phone,
-        # }
+        response['customer'] = {
+            'customer_id': instance.customer.user.id,
+            'first_name': instance.customer.user.first_name,
+            'last_name': instance.customer.user.last_name,
+            'email': instance.customer.user.email,
+            'phone': instance.customer.phone,
+        }
         return response
 
 
