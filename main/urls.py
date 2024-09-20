@@ -68,6 +68,8 @@ urlpatterns = [
 
     path('make-default-address/<int:pk>/',views.make_default_address,name='make_default_address'),
 
+    path('check-default-address/', views.check_default_address, name='check-default-address'),
+
     path('user/<int:pk>/',views.UserDetails.as_view(),name='user_details'),
 
     path('customer-login/',views.CustomerLogin,name='customer_login'),

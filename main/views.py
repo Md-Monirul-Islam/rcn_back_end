@@ -959,6 +959,25 @@ def make_default_address(request, pk):
     return JsonResponse({'bool': False})
 
 
+@api_view(['GET'])
+def check_default_address(request):
+    try:
+        # Check if the user has a related Customer object
+        customer = request.user.customer
+        
+        # Check if the customer has a default address
+        default_address = CustomerAddress.objects.filter(customer=customer, default_address=True).first()
+        
+        if default_address:
+            return JsonResponse({'default_address': True, 'address': default_address.address})
+        else:
+            return JsonResponse({'default_address': False, 'message': 'No default address found'})
+    
+    except Customer.DoesNotExist:
+        # Handle the case where the user has no associated customer
+        return JsonResponse({'error': 'User has no customer'}, status=400)
+
+
 
 def customer_dashboard(request, pk):
     customer_id = pk
