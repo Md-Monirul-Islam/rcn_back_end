@@ -93,7 +93,7 @@ class ProductListSerializer(serializers.ModelSerializer):
 class CouponCodeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Coupon
-        fields = ['id', 'code', 'discount_amount', 'is_active', 'expiration_date', 'products', 'vendor']
+        fields = ['id', 'code', 'discount_amount', 'is_active', 'expiration_date', 'product',]
 
 
 class ProductImageSerializer(serializers.ModelSerializer):

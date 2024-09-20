@@ -248,10 +248,13 @@ class AddCouponView(generics.ListCreateAPIView):
         # Check if the product belongs to the vendor
         if product_id:
             product = get_object_or_404(Product, id=product_id, vendor=vendor)
-            # Save the coupon with the vendor and product details
-            serializer.save(vendor=vendor, products=product)
+            coupon = serializer.save(vendor=vendor, product=product)  # Save coupon
+            return Response(CouponCodeSerializer(coupon).data, status=status.HTTP_201_CREATED)  # Return the created coupon data
         else:
-            raise NotAuthenticated("Product must be specified.")
+            return Response({"detail": "Product must be specified."}, status=status.HTTP_400_BAD_REQUEST)
+        
+
+
 
 class CouponDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Coupon.objects.all()

@@ -85,8 +85,8 @@ class Coupon(models.Model):
     discount_amount = models.DecimalField(max_digits=10, decimal_places=2)
     is_active = models.BooleanField(default=True)
     expiration_date = models.DateTimeField(null=True, blank=True)
-    products = models.ForeignKey(Product, related_name='coupons', on_delete=models.CASCADE)
-    vendor = models.ForeignKey(Vendor, related_name='coupons', on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, related_name='product_coupon', on_delete=models.CASCADE)
+    vendor = models.ForeignKey(Vendor, related_name='vendor_coupon', on_delete=models.CASCADE)
 
 
     def __str__(self):
