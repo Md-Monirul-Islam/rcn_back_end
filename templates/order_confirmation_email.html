@@ -5,7 +5,7 @@
     <title>Order Confirmation</title>
 </head>
 <body>
-    <p>Dear {{ customer_name }},</p>
+    <p>Dear {{ customer_first_name }}, {{ customer_last_name }}</p>
 
     <p>We are thrilled to let you know that your order ID <strong>#{{ order_number }}</strong> has been successfully received({{payment_method}})! Thank you for choosing {{ vendor_shop_name }} to fulfill your shopping needs.
         {% if select_courier %}

@@ -108,7 +108,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
     product_image = ProductImageSerializer(many=True, read_only=True)
     class Meta:
         model = Product
-        fields = ['id','category','vendor','title','slug','tags','detail','price','usd_price','product_ratings','product_image','demo_url','image','product_file','downloads','publish_status','hot_deal']
+        fields = ['id','category','vendor','title','slug','tags','detail','price','discount_price','product_ratings','product_image','demo_url','image','product_file','downloads','publish_status','hot_deal']
 
         def __intit__(self,*args, **kwargs):
             super(ProductDetailSerializer,self).__init__(*args, **kwargs)

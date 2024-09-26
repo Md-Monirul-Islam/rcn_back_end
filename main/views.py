@@ -36,6 +36,9 @@ from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from datetime import datetime
+import decimal
+from decimal import Decimal, InvalidOperation
+import logging
 
 # Create your views here.
 
@@ -768,9 +771,6 @@ class OrderList(generics.ListAPIView):
     #     order_serializer = OrderSerializer(order)
     #     return Response(order_serializer.data, status=status.HTTP_201_CREATED)
     
-import decimal
-from decimal import Decimal, InvalidOperation
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -875,7 +875,7 @@ class SubmitOrder(APIView):
             total_amount=total_amount,
             order_status=order_status,
             payment_method=payment_method,
-            select_courier=select_courier
+            select_courier=select_courier,
         )
 
         # Create OrderItems for each product in the cart
@@ -891,14 +891,21 @@ class SubmitOrder(APIView):
                 price=product.price
             )
 
-        # Send confirmation email (same as before)
+        # Send confirmation email
         customer_email = customer.user.email
         vendor = first_vendor.user
+        vendor_first_name = vendor.first_name
+        vendor_last_name = vendor.last_name
+        vendor_email = vendor.email
+        vendor_phone = first_vendor.phone
+        vendor_shop_name = first_vendor.shop_name
+        # Email subject
         subject = 'Thank You for Your Purchase! Order Confirmation'
 
         # Prepare email context
         context = {
-            'customer_name': customer.user.first_name,
+            'customer_first_name': customer.user.first_name,
+            'customer_last_name': customer.user.last_name,
             'order_number': order.id,
             'order_date': order.order_time,
             'product_list': product_list,
@@ -906,7 +913,12 @@ class SubmitOrder(APIView):
             'total_amount': str(total_amount),
             'payment_method': payment_method,
             'select_courier': select_courier,
-            'vendor_shop_name': first_vendor.shop_name
+            'vendor_shop_name': vendor_shop_name,
+
+            'vendor_first_name': vendor_first_name,
+            'vendor_last_name': vendor_last_name,
+            'vendor_email': vendor_email,
+            'vendor_phone': vendor_phone,
         }
 
         html_message = render_to_string('order_confirmation_email.html', context)
@@ -923,11 +935,6 @@ class SubmitOrder(APIView):
         )
 
         return Response({'order_id': order.id}, status=status.HTTP_201_CREATED)
-
-
-
-
-
 
 
 
