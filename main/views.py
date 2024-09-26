@@ -29,9 +29,6 @@ from django.db.models import Q
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.authentication import TokenAuthentication
 from rest_framework_simplejwt.tokens import RefreshToken
-from decimal import Decimal, InvalidOperation
-from django.core.exceptions import ValidationError
-from decimal import Decimal
 from rest_framework_simplejwt.views import TokenObtainPairView
 from django.utils.dateparse import parse_date
 from django.core.mail import send_mail
@@ -263,17 +260,21 @@ class CouponDetailView(generics.RetrieveUpdateDestroyAPIView):
     
 
 
+@api_view(['GET'])
 def apply_coupon(request):
-    product_id = request.GET.get('product_id')
-    coupon_code = request.GET.get('coupon_code')
+    product_id = request.query_params.get('product_id')
+    coupon_code = request.query_params.get('coupon_code')
 
-    product = get_object_or_404(Product, id=product_id)
-    final_price = product.get_final_price(coupon_code=coupon_code)
-
-    return JsonResponse({
-        'final_price': final_price,
-        'discount_applied': product.price - final_price
-    })
+    try:
+        product = Product.objects.get(id=product_id)
+        final_price = product.get_final_price(coupon_code)
+        
+        return Response({
+            'discount_applied': product.price - final_price,  # Discount amount
+            'discount_price': final_price  # Final price after discount
+        })
+    except Product.DoesNotExist:
+        return Response({'error': 'Product not found'}, status=404)
     
 
 # @permission_classes([IsAuthenticatedOrReadOnly])
@@ -650,44 +651,222 @@ class OrderList(generics.ListAPIView):
 
 
 
+# class SubmitOrder(APIView):
+    # permission_classes = [IsAuthenticated]
+
+    # def post(self, request, *args, **kwargs):
+    #     customer = request.user.customer
+    #     cart_data = request.data.get('cart_items', [])
+    #     total_amount = request.data['total_amount']
+    #     payment_method = request.data.get('payment_method', 'Online Payment')
+    #     select_courier = request.data.get('select_courier', None)
+    #     coupon_code = request.data.get('coupon_code', None)
+
+    #     total_amount = decimal.Decimal(total_amount)
+
+    #     # Validate the courier selection
+    #     if not select_courier:
+    #         return Response({'error': 'Please select a courier service.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    #     # Calculate the total amount on the backend
+    #     first_vendor = None
+    #     product_list = []
+    #     for item in cart_data:
+    #         product_id = item.get('product_id')
+    #         quantity = item.get('quantity', 1)
+    #         product = get_object_or_404(Product, id=product_id)
+
+    #         # Set the vendor to the first product's vendor
+    #         if not first_vendor:
+    #             first_vendor = product.vendor
+
+    #         total_amount += product.price * quantity
+    #         product_list.append({
+    #             'title': product.title,
+    #             'price': product.price,
+    #             'image': product.image.url
+    #         })
+
+    #     # Validate the coupon code if provided
+    #     discount_amount = 0
+    #     if coupon_code:
+    #         coupon = get_object_or_404(Coupon, code=coupon_code, is_active=True)
+    #         discount_amount = coupon.discount_amount
+    #         total_amount -= discount_amount  # Apply discount
+
+    #     # Set order status based on payment method
+    #     order_status = 'Confirm' if payment_method == 'mobile-banking' else 'Pending'
+
+    #     # Create the Order and associate it with the first vendor
+    #     order = Order.objects.create(
+    #         customer=customer,
+    #         vendor=first_vendor,
+    #         total_amount=total_amount,
+    #         order_status=order_status,
+    #         payment_method=payment_method,
+    #         select_courier=select_courier
+    #     )
+
+    #     # Create OrderItems for each product in the cart
+    #     for item in cart_data:
+    #         product_id = item.get('product_id')
+    #         quantity = item.get('quantity', 1)
+    #         product = get_object_or_404(Product, id=product_id)
+
+    #         OrderItems.objects.create(
+    #             order=order,
+    #             product=product,
+    #             quantity=quantity,
+    #             price=product.price
+    #         )
+
+    #     # Send confirmation email
+    #     customer_email = customer.user.email
+    #     vendor = first_vendor.user  # Get the associated vendor user
+    #     vendor_first_name = vendor.first_name
+    #     vendor_last_name = vendor.last_name
+    #     vendor_email = vendor.email
+    #     vendor_phone = first_vendor.phone
+    #     vendor_shop_name = first_vendor.shop_name
+
+    #     # Email subject
+    #     subject = 'Thank You for Your Purchase! Order Confirmation'
+
+    #     # Render email body using a template
+    #     context = {
+    #         'customer_name': customer.user.first_name,
+    #         'order_number': order.id,
+    #         'order_date': order.order_time,
+    #         'product_list': product_list,
+    #         'vendor_first_name': vendor_first_name,
+    #         'vendor_last_name': vendor_last_name,
+    #         'vendor_email': vendor_email,
+    #         'vendor_phone': vendor_phone,
+    #         'payment_method': payment_method,
+    #         'select_courier': select_courier,
+    #         'vendor_shop_name': vendor_shop_name,
+    #         'discount_amount': discount_amount  # Include the discount in the email
+    #     }
+
+    #     # Prepare the email message
+    #     html_message = render_to_string('order_confirmation_email.html', context)
+    #     plain_message = strip_tags(html_message)
+
+    #     recipient_list = [customer_email]
+    #     send_mail(subject, plain_message, settings.DEFAULT_FROM_EMAIL, recipient_list, html_message=html_message)
+
+    #     # Save the sent email details in the SentEmail model
+    #     SentEmail.objects.create(
+    #         recipient=customer_email,
+    #         subject=subject,
+    #         message=plain_message,
+    #         customer=customer.user,  # Link the customer
+    #         vendor=vendor  # Link the vendor's user
+    #     )
+
+    #     # Serialize and return the response
+    #     order_serializer = OrderSerializer(order)
+    #     return Response(order_serializer.data, status=status.HTTP_201_CREATED)
+    
+import decimal
+from decimal import Decimal, InvalidOperation
+import logging
+
+logger = logging.getLogger(__name__)
+
 class SubmitOrder(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
         customer = request.user.customer
         cart_data = request.data.get('cart_items', [])
-        total_amount = 0
         payment_method = request.data.get('payment_method', 'Online Payment')
         select_courier = request.data.get('select_courier', None)
+        coupon_code = request.data.get('coupon_code', None)
 
-        # Validate the courier selection
+        # Initialize total_amount as a Decimal
+        total_amount = Decimal(0)  # Start from 0
+        logger.info(f'Initialized total_amount: {total_amount}')
+
+        # Ensure courier is selected
         if not select_courier:
             return Response({'error': 'Please select a courier service.'}, status=status.HTTP_400_BAD_REQUEST)
 
         # Calculate the total amount on the backend
-        first_vendor = None
         product_list = []
+        first_vendor = None
         for item in cart_data:
             product_id = item.get('product_id')
-            quantity = item.get('quantity', 1)
-            product = Product.objects.get(id=product_id)
+            quantity = item.get('quantity', 1)  # Default to 1 if quantity is not provided
 
-            # Set the vendor to the first product's vendor
+            logger.info(f'Processing item: {item}')
+
+            if not product_id:
+                return Response({'error': 'Missing product ID in cart item.'}, status=status.HTTP_400_BAD_REQUEST)
+
+            product = get_object_or_404(Product, id=product_id)
+
             if not first_vendor:
                 first_vendor = product.vendor
 
-            total_amount += product.price * quantity
+            # Safely convert product price to Decimal and log it
+            try:
+                product_price = Decimal(str(product.price))
+                logger.info(f'Product price for {product.title}: {product_price}')
+            except (ValueError, decimal.InvalidOperation):
+                logger.error(f'Invalid product price format for product {product.title}.')
+                return Response({'error': 'Invalid product price format.'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Safely convert quantity to Decimal
+            try:
+                quantity_decimal = Decimal(str(quantity))
+                logger.info(f'Quantity for {product.title}: {quantity_decimal}')
+            except (ValueError, decimal.InvalidOperation):
+                logger.error(f'Invalid quantity format for product {product.title}: {quantity}')
+                return Response({'error': f'Invalid quantity format for product {product.title}.'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Update total_amount with product price and quantity
+            try:
+                total_amount += product_price * quantity_decimal
+                logger.info(f'Updated total_amount after adding {product.title}: {total_amount}')
+            except decimal.InvalidOperation as e:
+                logger.error(f'Error updating total_amount: {e}')
+                return Response({'error': 'Error calculating total amount.'}, status=status.HTTP_400_BAD_REQUEST)
+
             product_list.append({
                 'title': product.title,
-                'price': product.price,
+                'price': str(product.price),
                 'image': product.image.url
             })
 
+        # Validate coupon code if provided
+        discount_amount = Decimal(0)
+        if coupon_code:
+            try:
+                coupon = Coupon.objects.get(code=coupon_code, product__in=[item.get('product_id') for item in cart_data], is_active=True)
+                if coupon.is_valid():
+                    discount_amount = coupon.discount_amount
+                    try:
+                        total_amount -= discount_amount
+                        logger.info(f'Discount applied: {discount_amount}, new total_amount: {total_amount}')
+                    except decimal.InvalidOperation:
+                        logger.error('Error applying discount to total_amount.')
+                        return Response({'error': 'Error applying discount.'}, status=status.HTTP_400_BAD_REQUEST)
+            except Coupon.DoesNotExist:
+                return Response({'error': 'Invalid or expired coupon code.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Ensure total_amount is non-negative
+        try:
+            logger.info(f'Before checking, total_amount: {total_amount}')
+            if total_amount < 0:
+                total_amount = Decimal(0)
+                logger.info('Total amount set to 0 due to negative value.')
+        except decimal.InvalidOperation as e:
+            logger.error(f'Error comparing total_amount to 0: {e}, total_amount: {total_amount}')
+            return Response({'error': 'Error comparing total amount.'}, status=status.HTTP_400_BAD_REQUEST)
+
         # Set order status based on payment method
-        if payment_method == 'mobile-banking':
-            order_status = 'Confirm'
-        else:
-            order_status = 'Pending'
+        order_status = 'Confirm' if payment_method == 'mobile-banking' else 'Pending'
 
         # Create the Order and associate it with the first vendor
         order = Order.objects.create(
@@ -702,8 +881,8 @@ class SubmitOrder(APIView):
         # Create OrderItems for each product in the cart
         for item in cart_data:
             product_id = item.get('product_id')
-            quantity = item.get('quantity', 1)
-            product = Product.objects.get(id=product_id)
+            quantity = item.get('quantity', 1)  # Use get to avoid KeyError
+            product = get_object_or_404(Product, id=product_id)
 
             OrderItems.objects.create(
                 order=order,
@@ -712,53 +891,45 @@ class SubmitOrder(APIView):
                 price=product.price
             )
 
-        # Send confirmation email
+        # Send confirmation email (same as before)
         customer_email = customer.user.email
-        vendor = first_vendor.user  # Get the associated vendor user
-        vendor_first_name = vendor.first_name
-        vendor_last_name = vendor.last_name
-        vendor_email = vendor.email
-        vendor_phone = first_vendor.phone
-        vendor_shop_name = first_vendor.shop_name
-
-        # Email subject
+        vendor = first_vendor.user
         subject = 'Thank You for Your Purchase! Order Confirmation'
 
-        # Render email body using a template (you can also construct it in plain text if you prefer)
+        # Prepare email context
         context = {
             'customer_name': customer.user.first_name,
             'order_number': order.id,
             'order_date': order.order_time,
             'product_list': product_list,
-            'vendor_first_name': vendor_first_name,
-            'vendor_last_name':vendor_last_name,
-            'vendor_email': vendor_email,
-            'vendor_phone': vendor_phone,
-            'payment_method':payment_method,
-            'select_courier':select_courier,
-            'vendor_shop_name':vendor_shop_name
+            'discount_amount': str(discount_amount),
+            'total_amount': str(total_amount),
+            'payment_method': payment_method,
+            'select_courier': select_courier,
+            'vendor_shop_name': first_vendor.shop_name
         }
 
-        # Prepare the email message
         html_message = render_to_string('order_confirmation_email.html', context)
         plain_message = strip_tags(html_message)
 
-        recipient_list = [customer_email]
-        send_mail(subject, plain_message, settings.DEFAULT_FROM_EMAIL, recipient_list, html_message=html_message)
+        send_mail(subject, plain_message, settings.DEFAULT_FROM_EMAIL, [customer_email], html_message=html_message)
 
-        # Save the sent email details in the SentEmail model
         SentEmail.objects.create(
             recipient=customer_email,
             subject=subject,
             message=plain_message,
-            customer=customer.user,  # Link the customer
-            vendor=vendor  # Link the vendor's user
+            customer=customer.user,
+            vendor=vendor
         )
 
-        # Serialize and return the response
-        order_serializer = OrderSerializer(order)
-        return Response(order_serializer.data, status=status.HTTP_201_CREATED)
-    
+        return Response({'order_id': order.id}, status=status.HTTP_201_CREATED)
+
+
+
+
+
+
+
 
 #### Order Items
 

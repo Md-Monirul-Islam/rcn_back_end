@@ -54,6 +54,7 @@ class Product(models.Model):
     downloads = models.IntegerField(null=True,default=0)
     publish_status = models.BooleanField(default=False)
     hot_deal = models.BooleanField(default=False,blank=True,null=True)
+    discount_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     def __str__(self):
         return self.title
     
@@ -72,9 +73,11 @@ class Product(models.Model):
         final_price = self.price
         if coupon_code:
             try:
-                coupon = Coupon.objects.get(code=coupon_code, products=self, is_active=True)
+                coupon = Coupon.objects.get(code=coupon_code, product=self, is_active=True)
                 if coupon.is_valid():
                     final_price -= coupon.discount_amount
+                    self.discount_price = final_price  # Save the discount price in the product
+                    self.save()  # Save the updated product to the database
             except Coupon.DoesNotExist:
                 pass  # Invalid coupon code
         return final_price
