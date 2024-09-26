@@ -768,8 +768,8 @@ class OrderList(generics.ListAPIView):
     #     )
 
     #     # Serialize and return the response
-    #     order_serializer = OrderSerializer(order)
-    #     return Response(order_serializer.data, status=status.HTTP_201_CREATED)
+        # order_serializer = OrderSerializer(order)
+        # return Response(order_serializer.data, status=status.HTTP_201_CREATED)
     
 
 logger = logging.getLogger(__name__)
@@ -934,7 +934,8 @@ class SubmitOrder(APIView):
             vendor=vendor
         )
 
-        return Response({'order_id': order.id}, status=status.HTTP_201_CREATED)
+        order_serializer = OrderSerializer(order)
+        return Response(order_serializer.data, status=status.HTTP_201_CREATED)
 
 
 
@@ -1485,15 +1486,34 @@ class ProductSearchView(APIView):
 
 base_url = 'http://127.0.0.1:8000'
 
-@permission_classes([IsAuthenticated])
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from uuid import uuid4
+from decimal import Decimal, InvalidOperation
+import requests
+from .models import Order, Transaction
+import logging
+
+# Initialize logger
+logger = logging.getLogger(__name__)
+
 @api_view(['POST'])
 def initiate_payment(request):
-    post_data = request.data
-    order_id = post_data.get('order_id')
+    # Log the incoming request data for debugging
+    logger.info("Received initiate payment request data: %s", request.data)
+
+    post_data = request.data  # Use request.data for JSON payloads
+    order_id = post_data.get('order_id')  # Get order_id from the request payload
+
+    # Ensure order_id is provided
+    if not order_id:
+        logger.error("Order ID is missing")
+        return Response({"error": "Order ID is required"}, status=400)
 
     try:
         order = Order.objects.get(id=order_id)
     except Order.DoesNotExist:
+        logger.error("Order with ID %s does not exist", order_id)
         return Response({"error": "Order does not exist"}, status=400)
 
     amount_str = post_data.get('amount')
@@ -1501,12 +1521,12 @@ def initiate_payment(request):
     # Validate and convert amount
     try:
         total_amount = Decimal(amount_str).quantize(Decimal('0.01'))
-        print(f"Received amount: {amount_str}")
         if total_amount <= 0:
+            logger.error("Invalid amount: %s", amount_str)
             return Response({"error": "Amount must be greater than zero"}, status=400)
     except (ValueError, InvalidOperation):
+        logger.error("Invalid amount format: %s", amount_str)
         return Response({"error": f"Invalid amount format: {amount_str}"}, status=400)
-
 
     customer = order.customer
     user = customer.user
@@ -1515,6 +1535,7 @@ def initiate_payment(request):
     customer_address = customer.customer_address.filter(default_address=True).first()
 
     if not customer_address:
+        logger.error("Default customer address does not exist for user %s", user)
         return Response({"error": "Default customer address does not exist"}, status=400)
 
     # Set transaction ID and create a new transaction
@@ -1559,9 +1580,95 @@ def initiate_payment(request):
         'ship_country': 'Bangladesh',
     }
 
-    # Call SSLCommerz payment API
+    # Call SSLCommerz payment API and log the request and response
+    logger.info("Sending payment data to SSLCommerz: %s", payment_data)
     response = requests.post('https://sandbox.sslcommerz.com/gwprocess/v4/api.php', data=payment_data)
-    return Response(response.json())
+
+    # Check if the request was successful and log the response
+    if response.status_code == 200:
+        logger.info("Payment initiation successful: %s", response.json())
+        return Response(response.json())
+    else:
+        logger.error("Payment initiation failed with status code: %s and response: %s", response.status_code, response.text)
+        return Response({"error": "Payment gateway request failed"}, status=response.status_code)
+
+# @permission_classes([AllowAny])
+# @api_view(['POST'])
+# def initiate_payment(request):
+#     post_data = request.data
+#     order_id = post_data.get('order_id')
+
+#     try:
+#         order = Order.objects.get(id=order_id)
+#     except Order.DoesNotExist:
+#         return Response({"error": "Order does not exist"}, status=400)
+
+#     amount_str = post_data.get('amount')
+
+#     # Validate and convert amount
+#     try:
+#         total_amount = Decimal(amount_str).quantize(Decimal('0.01'))
+#         print(f"Received amount: {amount_str}")
+#         if total_amount <= 0:
+#             return Response({"error": "Amount must be greater than zero"}, status=400)
+#     except (ValueError, InvalidOperation):
+#         return Response({"error": f"Invalid amount format: {amount_str}"}, status=400)
+
+
+#     customer = order.customer
+#     user = customer.user
+
+#     # Fetch the default customer address
+#     customer_address = customer.customer_address.filter(default_address=True).first()
+
+#     if not customer_address:
+#         return Response({"error": "Default customer address does not exist"}, status=400)
+
+#     # Set transaction ID and create a new transaction
+#     transaction_id = uuid4().hex
+#     transaction = Transaction.objects.create(
+#         transaction_id=transaction_id,
+#         amount=total_amount,
+#         user=user,
+#         customer_address=customer_address,
+#         customer_email=user.email,
+#         customer_phone=customer.phone,
+#         customer_postcode=customer_address.post,
+#         order=order,
+#     )
+
+#     # Prepare payment data using SSLCommerz API
+#     payment_data = {
+#         'store_id': 'kopot665596f0af929',
+#         'store_passwd': 'kopot665596f0af929@ssl',
+#         'total_amount': transaction.amount,
+#         'currency': transaction.currency,
+#         'tran_id': transaction.transaction_id,
+#         'product_name': 'Order Items',
+#         'product_category': 'Various',
+#         'product_profile': 'General',
+#         'success_url': f'{base_url}/api/payment-success/',
+#         'fail_url': f'{base_url}/api/payment-fail/',
+#         'cancel_url': f'{base_url}/api/payment-cancel/',
+#         'shipping_method': 'Courier',
+#         'cus_country': 'Bangladesh',
+#         'cus_name': user.get_full_name(),
+#         'cus_email': transaction.customer_email,
+#         'cus_phone': transaction.customer_phone,
+#         'cus_add1': customer_address.address,
+#         'cus_city': customer_address.city,
+#         'cus_postcode': transaction.customer_postcode,
+#         'ship_name': user.get_full_name(),
+#         'ship_add1': customer_address.address,
+#         'ship_city': customer_address.city,
+#         'ship_state': customer_address.city,
+#         'ship_postcode': customer_address.post,
+#         'ship_country': 'Bangladesh',
+#     }
+
+#     # Call SSLCommerz payment API
+#     response = requests.post('https://sandbox.sslcommerz.com/gwprocess/v4/api.php', data=payment_data)
+#     return Response(response.json())
 
 
 @api_view(['POST'])
