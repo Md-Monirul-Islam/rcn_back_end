@@ -155,6 +155,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
     order_status = serializers.CharField(source='order.order_status', read_only=True)
     select_courier = serializers.CharField(source='order.select_courier', read_only=True)
     order = serializers.PrimaryKeyRelatedField(read_only=True)  # Ensure order is serialized as its primary key
+    discount_price = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)  # Use DecimalField for discount_price
     
     class Meta:
         model = OrderItems
@@ -175,6 +176,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
         response = super().to_representation(instance)
         # Serialize product details
         response['product'] = ProductDetailSerializer(instance.product, context=self.context).data
+        response['discount_price'] = instance.product.discount_price
         customer = instance.order.customer
         # Serialize customer details from the order
         response['customer'] = {
@@ -197,10 +199,11 @@ class TransactionSerializer(serializers.ModelSerializer):
 class OrderSerializer(serializers.ModelSerializer):
     transactions = TransactionSerializer(many=True, read_only=True)
     order_items = OrderItemSerializer(many=True, read_only=True)
+    
 
     class Meta:
         model = Order
-        fields = ['id', 'customer', 'order_time', 'order_status', 'total_amount', 'transactions', 'payment_method', 'order_items','select_courier']
+        fields = ['id','customer','order_time','order_status','total_amount','transactions','payment_method','order_items','select_courier']
 
     def to_representation(self, instance):
         response = super().to_representation(instance)

@@ -553,13 +553,21 @@ def CustomerRegister(request):
 
 # Logout
 @api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def logout_view(request):
-    # # For token-based authentication
-    # if request.auth:
-    #     request.auth.delete()
-    # For session-based authentication
-    logout(request)
-    return Response({"message": "Logged out successfully"}, status=status.HTTP_200_OK)
+    try:
+        # Blacklist the refresh token for JWT
+        refresh_token = request.data.get("refresh_token")
+        if refresh_token:
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+            logout(request)
+            
+            return Response({"message": "Logged out successfully and token blacklisted"}, status=status.HTTP_200_OK)
+        else:
+            return Response({"error": "Refresh token not provided"}, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 
@@ -783,6 +791,7 @@ class SubmitOrder(APIView):
         payment_method = request.data.get('payment_method', 'Online Payment')
         select_courier = request.data.get('select_courier', None)
         coupon_code = request.data.get('coupon_code', None)
+        discount_price = request.data.get('discount_price') 
 
         # Initialize total_amount as a Decimal
         total_amount = Decimal(0)  # Start from 0
@@ -842,17 +851,14 @@ class SubmitOrder(APIView):
         # Validate coupon code if provided
         discount_amount = Decimal(0)
         if coupon_code:
-            try:
-                coupon = Coupon.objects.get(code=coupon_code, product__in=[item.get('product_id') for item in cart_data], is_active=True)
-                if coupon.is_valid():
-                    discount_amount = coupon.discount_amount
-                    try:
-                        total_amount -= discount_amount
-                        logger.info(f'Discount applied: {discount_amount}, new total_amount: {total_amount}')
-                    except decimal.InvalidOperation:
-                        logger.error('Error applying discount to total_amount.')
-                        return Response({'error': 'Error applying discount.'}, status=status.HTTP_400_BAD_REQUEST)
-            except Coupon.DoesNotExist:
+            valid_coupons = Coupon.objects.filter(code=coupon_code, product__in=[item.get('product_id') for item in cart_data], is_active=True)
+            if valid_coupons.exists():
+                for coupon in valid_coupons:
+                    # Apply coupon to specific product(s)
+                    discount_amount += coupon.discount_amount
+                total_amount -= discount_amount
+                logger.info(f'Discount applied: {discount_amount}, new total_amount: {total_amount}')
+            else:
                 return Response({'error': 'Invalid or expired coupon code.'}, status=status.HTTP_400_BAD_REQUEST)
 
         # Ensure total_amount is non-negative
@@ -873,6 +879,7 @@ class SubmitOrder(APIView):
             customer=customer,
             vendor=first_vendor,
             total_amount=total_amount,
+            discount_price=discount_price,
             order_status=order_status,
             payment_method=payment_method,
             select_courier=select_courier,

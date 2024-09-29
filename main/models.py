@@ -137,6 +137,7 @@ class Order(models.Model):
     order_time = models.DateTimeField(auto_now_add=True)
     order_status = models.CharField(max_length=200,blank=True,null=True,choices=Order_STATUS)
     total_amount = models.DecimalField(max_digits=10,decimal_places=2,default=0)
+    discount_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     payment_method = models.CharField(max_length=50, choices=PAYMENT_METHOD_CHOICES, default='Online Payment')
     select_courier = models.CharField(max_length=50, choices=SELECT_COURIER,blank=True,null=True)
 

@@ -80,7 +80,7 @@ urlpatterns = [
 
     path('customer-login/',views.CustomerLogin,name='customer_login'),
 
-    path('customer-logout/',views.logout_view,name='customer_logout'),
+    path('logout/',views.logout_view,name='logout'),
 
     path('customer-register/',views.CustomerRegister,name='customer_register'),
 
