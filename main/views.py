@@ -336,6 +336,38 @@ class ProductImgsDetail(generics.ListCreateAPIView):
     
 
 
+
+@permission_classes([AllowAny])
+class ProductSpecificationView(APIView):
+    def post(self, request, *args, **kwargs):
+        product_id = request.data.get('product_id')
+        specifications = request.data.get('specifications', [])
+
+        # Check if product_id is provided
+        if not product_id:
+            return Response({"error": "Product ID is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            # Fetch the product by ID
+            product = Product.objects.get(id=product_id)
+        except Product.DoesNotExist:
+            return Response({"error": "Product with the given ID does not exist."}, status=status.HTTP_404_NOT_FOUND)
+
+        # Loop through the specifications and create ProductSpecification entries
+        for spec in specifications:
+            for feature in spec.get('features', []):
+                ProductSpecification.objects.create(
+                    product=product,
+                    title=spec.get('title'),
+                    feature_name=feature.get('feature_name'),
+                    feature_value=feature.get('feature_value'),
+                )
+
+        return Response({"message": "Specifications added successfully."}, status=status.HTTP_201_CREATED)
+    
+
+
+
 class DeleteProductImgDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = ProductImage.objects.all()
     serializer_class = ProductImageSerializer

@@ -97,6 +97,18 @@ class Coupon(models.Model):
 
     def is_valid(self):
         return self.is_active and (self.expiration_date is None or self.expiration_date > timezone.now())
+    
+
+
+class ProductSpecification(models.Model):
+    product = models.ForeignKey(Product, related_name='specifications', on_delete=models.CASCADE)
+    title = models.CharField(max_length=255)
+    feature_name = models.CharField(max_length=255)
+    feature_value = models.CharField(max_length=255)
+
+    def __str__(self):
+        return f"{self.title}: {self.feature_name} - {self.feature_value}"
+
         
 
 
