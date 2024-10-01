@@ -32,8 +32,10 @@ urlpatterns = [
     path('vendor/<int:vendor_id>/products/', views.VendorProductsView.as_view(), name='vendor-products'),
 
     path('vendor-products/',views.VendorProductList.as_view(),name='vendor-product-list'),
-    
-    path('product-specifications/', views.ProductSpecificationView.as_view(), name='product_specifications'),
+
+    path('add-product-specifications/', views.ProductSpecificationView.as_view(), name='product_specifications'),
+
+    path('show-product-specifications/<int:product_id>/', views.ProductSpecificationListView.as_view(), name='product-specifications'),
 
     ######## Product ########
     path('products/',views.ProductList.as_view(),name='product-list'),

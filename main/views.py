@@ -368,6 +368,17 @@ class ProductSpecificationView(APIView):
 
 
 
+class ProductSpecificationListView(generics.ListAPIView):
+    serializer_class = ProductSpecificationSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+    def get_queryset(self):
+        product_id = self.kwargs['product_id']
+        return ProductSpecification.objects.filter(product_id=product_id)
+    
+
+
+
 class DeleteProductImgDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = ProductImage.objects.all()
     serializer_class = ProductImageSerializer

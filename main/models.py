@@ -105,6 +105,7 @@ class ProductSpecification(models.Model):
     title = models.CharField(max_length=255)
     feature_name = models.CharField(max_length=255)
     feature_value = models.CharField(max_length=255)
+    add_time = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"{self.title}: {self.feature_name} - {self.feature_value}"

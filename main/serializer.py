@@ -3,7 +3,7 @@ from rest_framework import serializers, generics
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 from django.db.models import Count
-from .models import Product, ProductCategory, ProductImage, Transaction, Vendor,Customer,Order,OrderItems,CustomerAddress, ProductRating, WishList, Coupon
+from .models import Product, ProductCategory, ProductImage, ProductSpecification, Transaction, Vendor,Customer,Order,OrderItems,CustomerAddress, ProductRating, WishList, Coupon
 
 
 
@@ -103,12 +103,27 @@ class ProductImageSerializer(serializers.ModelSerializer):
 
 
 
+class ProductSpecificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductSpecification
+        fields = ['id', 'product', 'title', 'feature_name', 'feature_value']
+
+    # def to_representation(self, instance):
+    #     response = super().to_representation(instance)
+    #     # Serialize product details
+    #     response['product'] = ProductDetailSerializer(instance.product, context=self.context).data
+        
+    #     return response
+
+
+
 class ProductDetailSerializer(serializers.ModelSerializer):
     product_ratings = serializers.StringRelatedField(many=True, read_only=True)
     product_image = ProductImageSerializer(many=True, read_only=True)
+    specifications = ProductSpecificationSerializer(many=True, read_only=True)
     class Meta:
         model = Product
-        fields = ['id','category','vendor','title','slug','tags','detail','price','discount_price','product_ratings','product_image','demo_url','image','product_file','downloads','publish_status','hot_deal']
+        fields = ['id','category','vendor','title','slug','tags','detail','price','discount_price','product_ratings','product_image','demo_url','image','product_file','downloads','publish_status','hot_deal','specifications']
 
         def __intit__(self,*args, **kwargs):
             super(ProductDetailSerializer,self).__init__(*args, **kwargs)
