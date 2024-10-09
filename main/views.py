@@ -337,7 +337,7 @@ class ProductImgsDetail(generics.ListCreateAPIView):
 
 
 
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 class ProductSpecificationView(APIView):
     def post(self, request, *args, **kwargs):
         product_id = request.data.get('product_id')
@@ -847,7 +847,7 @@ class SubmitOrder(APIView):
         # Calculate the total amount on the backend
         product_list = []
         first_vendor = None
-        for item in cart_data:
+        for item in cart_data: 
             product_id = item.get('product_id')
             quantity = item.get('quantity', 1)  # Default to 1 if quantity is not provided
 
