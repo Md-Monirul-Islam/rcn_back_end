@@ -128,24 +128,6 @@ def vendor_register(request):
 
 
 
-# @csrf_exempt
-# def vendor_login(request):
-#     username = request.POST.get('username')
-#     password = request.POST.get('password')
-#     user = authenticate(username=username,password=password)
-#     if user:
-#         vendor = Vendor.objects.get(user=user)
-#         msg = {
-#         'bool': True,
-#         'user': user.username,
-#         'id': vendor.id
-#         }
-#     else:
-#         msg = {
-#             'bool':False,
-#             'msg':'Invalid username or password !!'
-#         }
-#     return JsonResponse(msg)
 
 
 @csrf_exempt
@@ -406,24 +388,6 @@ class TagProductList(generics.ListCreateAPIView):
         return qs
     
 
-# @csrf_exempt
-# def CustomerLogin(request):
-#     username = request.POST.get('username')
-#     password = request.POST.get('password')
-#     user = authenticate(username=username,password=password)
-#     if user:
-#         customer = Customer.objects.get(user=user)
-#         msg = {
-#         'bool': True,
-#         'user': user.username,
-#         'id': customer.id
-#         }
-#     else:
-#         msg = {
-#             'bool':False,
-#             'msg':'Invalid username or password !!'
-#         }
-#     return JsonResponse(msg)
 
 
 @csrf_exempt
@@ -538,60 +502,6 @@ def CustomerRegister(request):
     return JsonResponse(msg)
 
 
-# @csrf_exempt
-# def CustomerRegister(request):
-#     first_name = request.POST.get('first_name')
-#     last_name = request.POST.get('last_name')
-#     username = request.POST.get('username')
-#     email = request.POST.get('email')
-#     phone = request.POST.get('phone')
-#     password = request.POST.get('password')
-#     hashed_password = make_password(password)
-
-#     try:
-#         user = User.objects.create(
-#             first_name=first_name,
-#             last_name=last_name,
-#             username=username,
-#             email=email,
-#             password=hashed_password
-#         )
-        
-#         if user:
-#             try:
-#                 # Create customer
-#                 customer = Customer.objects.create(
-#                     user=user,
-#                     phone=phone,
-#                 )
-
-#                 # Assign user to the Customer_Permission group
-#                 customer_group, created = Group.objects.get_or_create(name='Customer_Permission')
-#                 user.groups.add(customer_group)
-
-#                 msg = {
-#                     'bool': True,
-#                     'user': user.id,
-#                     'customer': customer.id,
-#                     'msg': 'Thanks for your registration. Now you can login.'
-#                 }
-#             except IntegrityError:
-#                 msg = {
-#                     'bool': False,
-#                     'msg': "Phone already exists!"
-#                 }
-#         else:
-#             msg = {
-#                 'bool': False,
-#                 'msg': 'Oops... Something went wrong!'
-#             }
-#     except IntegrityError:
-#         msg = {
-#             'bool': False,
-#             'msg': "Username already exists!"
-#         }
-
-#     return JsonResponse(msg)
 
 
 # Logout
@@ -1035,17 +945,6 @@ class VendorOrderItemsList(generics.ListAPIView):
     
 
 
-#Vendor customer list
-# class VendorCustomerList(generics.ListAPIView):
-#     queryset = OrderItems.objects.all()
-#     serializer_class = OrderItemSerializer
-
-#     def get_queryset(self):
-#         qs = super().get_queryset()
-#         vendor_id = self.kwargs['pk']
-#         qs = qs.filter(product__vendor__id=vendor_id)
-#         return qs
-
 
 class VendorCustomerList(generics.ListAPIView):
     serializer_class = CustomerSerializer
@@ -1075,24 +974,6 @@ class VendorCustomerOrderItemList(generics.ListAPIView):
         customer_id = self.kwargs['customer_id']
         qs = qs.filter(product__vendor__id=vendor_id,order__customer__id=customer_id)
         return qs
-
-
-# class VendorCustomerOrderItemList(generics.ListAPIView):
-#     serializer_class = OrderItemSerializer
-
-#     def get_queryset(self):
-#         vendor_id = self.kwargs['vendor_id']
-#         customer_id = self.kwargs.get('customer_id')  # Use get() to handle missing customer_id
-
-#         if customer_id:
-#             queryset = OrderItems.objects.filter(
-#                 product__vendor__id=vendor_id,
-#                 order__customer__id=customer_id
-#             )
-#         else:
-#             queryset = OrderItems.objects.none()  # Or raise a custom exception
-
-#         return queryset
     
 
 
@@ -1101,11 +982,6 @@ class OrderItemDetailS(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = OrderItemSerializer
 
 
-
-#Order update
-# class OrderModify(generics.RetrieveUpdateAPIView):
-#     queryset = Order.objects.all()
-#     serializer_class = OrderSerializer
 
 class OrderModify(generics.RetrieveUpdateAPIView):
     queryset = Order.objects.all()
@@ -1289,20 +1165,6 @@ def vendor_dashboard(request, pk):
 
 
 
-#Vendor daily reports
-#only for date wise
-# class VendorDailyReport(generics.ListAPIView):
-#     serializer_class = VendorDailyReportSerializer
-#     # queryset = OrderItems.objects.all()
-
-#     def get_queryset(self):
-#         # qs = super().get_queryset()
-#         vendor_id = self.kwargs['pk']
-#         # Adjusting the annotation to use 'total_orders' instead of 'id__count'
-#         qs = OrderItems.objects.filter(product__vendor__id=vendor_id).values('order__order_time__date').annotate(total_orders=Count('id'))
-#         return qs
-    
-
 
 #date,month and year wise
 class VendorDailyReport(generics.ListAPIView):
@@ -1336,19 +1198,6 @@ class VendorDailyReport(generics.ListAPIView):
 
 
         
-
-
-#Vendor daily reports /// this code properly work without @property in model of OrderItems
-# class VendorDailyReport(generics.ListAPIView):
-#     serializer_class = VendorDailyReportSerializer
-#     # queryset = OrderItems.objects.all()
-
-#     def get_queryset(self):
-#         # qs = super().get_queryset()
-#         vendor_id = self.kwargs['pk']
-#         # Adjusting the annotation to use 'total_orders' instead of 'id__count'
-#         qs = OrderItems.objects.filter(product__vendor__id=vendor_id).values('order__order_time__date').annotate(total_orders=Count('id'))
-#         return qs
 
 
 class ProductRatingViewSet(viewsets.ModelViewSet):
@@ -1386,21 +1235,6 @@ class CategoryDetail(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = CategoryDetailSerializer
 
 
-
-
-# @csrf_exempt
-# def Update_Order_Status(request, pk):
-#     order_id = pk
-#     if request.method == "POST":
-#         update_order_status = Order.objects.filter(id=order_id).update(order_status=True)
-#         msg = {
-#             'bool': False,
-#         }
-#         if update_order_status:
-#             msg = {
-#                 'bool': True,
-#             }
-#         return JsonResponse(msg)
 
 
 @csrf_exempt
@@ -1500,21 +1334,6 @@ class VendorCategoryProductsView(generics.ListAPIView):
     
 
 
-
-#search view
-# class ProductSearchView(APIView):
-#     def get(self, request, format=None):
-#         query = request.GET.get('q', '')
-#         if query:
-#             products = Product.objects.filter(
-#                 Q(title__icontains=query) |
-#                 Q(category__title__icontains=query) |
-#                 Q(vendor__user__username__icontains=query)
-#             )
-#             serializer = ProductSerializer(products, many=True)
-#             return Response(serializer.data, status=status.HTTP_200_OK)
-#         else:
-#             return Response({"error": "No search query provided."}, status=status.HTTP_400_BAD_REQUEST)
 
 class ProductSearchView(APIView):
     def get(self, request, format=None):
@@ -1743,23 +1562,6 @@ class CustomerOrderItemListShowForAdmin(generics.ListAPIView):
         return qs
     
 
-
-#It's ok
-# class VendorOrderedProductsListView(generics.ListAPIView):
-#     serializer_class = ProductSerializer
-
-#     def get_queryset(self):
-#         vendor_id = self.kwargs['vendor_id']
-#         # Get all products for the vendor
-#         products = Product.objects.filter(vendor_id=vendor_id).order_by('-id')
-        
-#         # Get ordered products for this vendor
-#         ordered_product_ids = OrderItems.objects.filter(product__vendor_id=vendor_id).values_list('product_id', flat=True).distinct()
-        
-#         # Filter products to include only those that have been ordered
-#         ordered_products = products.filter(id__in=ordered_product_ids)
-        
-#         return ordered_products
 
 
 class VendorOrderedProductsListView(generics.ListAPIView):
