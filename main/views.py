@@ -22,7 +22,7 @@ from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnl
 from django.shortcuts import get_object_or_404
 from rest_framework.exceptions import NotAuthenticated
 from django.db.models import Count
-from django.db.models.functions import TruncDate, TruncMonth, TruncYear
+from django.db.models.functions import TruncDate, TruncMonth, TruncYear, TruncDay, TruncWeek
 from django.db.models import OuterRef, Subquery
 from rest_framework.views import APIView
 from django.db.models import Q
@@ -39,6 +39,7 @@ from datetime import datetime
 import decimal
 from decimal import Decimal, InvalidOperation
 import logging
+from django.db.models import Sum, F, DecimalField
 
 # Create your views here.
 
@@ -346,6 +347,66 @@ class ProductSpecificationView(APIView):
                 )
 
         return Response({"message": "Specifications added successfully."}, status=status.HTTP_201_CREATED)
+    
+
+
+
+class VendorIncomeView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, vendor_id):
+        # Daily income
+        daily_income = (
+            OrderItems.objects.filter(order__vendor_id=vendor_id)
+            .annotate(day=TruncDay('order__order_time'))
+            .values('day')
+            .annotate(total=Sum(F('price') * F('quantity'), output_field=DecimalField()))
+            .order_by('day')
+        )
+
+        # Weekly income
+        weekly_income = (
+            OrderItems.objects.filter(order__vendor_id=vendor_id)
+            .annotate(week=TruncWeek('order__order_time'))
+            .values('week')
+            .annotate(total=Sum(F('price') * F('quantity'), output_field=DecimalField()))
+            .order_by('week')
+        )
+
+        # Monthly income
+        monthly_income = (
+            OrderItems.objects.filter(order__vendor_id=vendor_id)
+            .annotate(month=TruncMonth('order__order_time'))
+            .values('month')
+            .annotate(total=Sum(F('price') * F('quantity'), output_field=DecimalField()))
+            .order_by('month')
+        )
+
+        # Yearly income
+        yearly_income = (
+            OrderItems.objects.filter(order__vendor_id=vendor_id)
+            .annotate(year=TruncYear('order__order_time'))
+            .values('year')
+            .annotate(total=Sum(F('price') * F('quantity'), output_field=DecimalField()))
+            .order_by('year')
+        )
+
+        # Grand total income
+        grand_total = (
+            OrderItems.objects.filter(order__vendor_id=vendor_id)
+            .aggregate(total=Sum(F('price') * F('quantity'), output_field=DecimalField()))['total'] or 0
+        )
+
+        # Prepare response data
+        data = {
+            "daily_income": list(daily_income),
+            "weekly_income": list(weekly_income),
+            "monthly_income": list(monthly_income),
+            "yearly_income": list(yearly_income),
+            "grand_total": grand_total,
+        }
+
+        return Response(data)
     
 
 

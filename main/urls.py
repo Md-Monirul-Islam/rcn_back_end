@@ -37,6 +37,8 @@ urlpatterns = [
 
     path('show-product-specifications/<int:product_id>/', views.ProductSpecificationListView.as_view(), name='product-specifications'),
 
+    path('vendor/<int:vendor_id>/income/', views.VendorIncomeView.as_view(), name='vendor-income'),
+
     ######## Product ########
     path('products/',views.ProductList.as_view(),name='product-list'),
 
