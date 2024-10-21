@@ -410,7 +410,7 @@ class ProductSpecificationView(APIView):
 
 
 class VendorIncomeView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request, vendor_id):
         # Exclude cancelled orders
