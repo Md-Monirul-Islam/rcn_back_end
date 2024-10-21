@@ -120,7 +120,7 @@ class ProductSpecificationSerializer(serializers.ModelSerializer):
 class ProductDetailSerializer(serializers.ModelSerializer):
     product_ratings = serializers.StringRelatedField(many=True, read_only=True)
     product_image = ProductImageSerializer(many=True, read_only=True)
-    specifications = ProductSpecificationSerializer(many=True, read_only=True)
+    specifications = serializers.SerializerMethodField()
     class Meta:
         model = Product
         fields = ['id','category','vendor','title','slug','tags','detail','price','discount_price','product_ratings','product_image','demo_url','image','product_file','downloads','publish_status','hot_deal','specifications']
@@ -128,6 +128,24 @@ class ProductDetailSerializer(serializers.ModelSerializer):
         def __intit__(self,*args, **kwargs):
             super(ProductDetailSerializer,self).__init__(*args, **kwargs)
         # depth = 1
+    
+    def get_specifications(self, obj):
+        # Group specifications by title
+        grouped_specifications = {}
+        for spec in obj.specifications.all():
+            title = spec.title
+            if title not in grouped_specifications:
+                grouped_specifications[title] = []
+            grouped_specifications[title].append({
+                'name': spec.feature_name,
+                'value': spec.feature_value
+            })
+
+        # Transform the dictionary into a list of objects with 'title' and 'features'
+        return [
+            {'title': title, 'features': features} 
+            for title, features in grouped_specifications.items()
+        ]
 
 
 
