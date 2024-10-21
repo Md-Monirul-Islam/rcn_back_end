@@ -351,13 +351,77 @@ class ProductSpecificationView(APIView):
 
 
 
+# class VendorIncomeView(APIView):
+#     permission_classes = [AllowAny]
+
+#     def get(self, request, vendor_id):
+#         # Daily income
+#         daily_income = (
+#             OrderItems.objects.filter(order__vendor_id=vendor_id)
+#             .annotate(day=TruncDay('order__order_time'))
+#             .values('day')
+#             .annotate(total=Sum(F('price') * F('quantity'), output_field=DecimalField()))
+#             .order_by('day')
+#         )
+
+#         # Weekly income
+#         weekly_income = (
+#             OrderItems.objects.filter(order__vendor_id=vendor_id)
+#             .annotate(week=TruncWeek('order__order_time'))
+#             .values('week')
+#             .annotate(total=Sum(F('price') * F('quantity'), output_field=DecimalField()))
+#             .order_by('week')
+#         )
+
+#         # Monthly income
+#         monthly_income = (
+#             OrderItems.objects.filter(order__vendor_id=vendor_id)
+#             .annotate(month=TruncMonth('order__order_time'))
+#             .values('month')
+#             .annotate(total=Sum(F('price') * F('quantity'), output_field=DecimalField()))
+#             .order_by('month')
+#         )
+
+#         # Yearly income
+#         yearly_income = (
+#             OrderItems.objects.filter(order__vendor_id=vendor_id)
+#             .annotate(year=TruncYear('order__order_time'))
+#             .values('year')
+#             .annotate(total=Sum(F('price') * F('quantity'), output_field=DecimalField()))
+#             .order_by('year')
+#         )
+
+#         # Grand total income
+#         grand_total = (
+#             OrderItems.objects.filter(order__vendor_id=vendor_id)
+#             .aggregate(total=Sum(F('price') * F('quantity'), output_field=DecimalField()))['total'] or 0
+#         )
+
+#         # Prepare response data
+#         data = {
+#             "daily_income": list(daily_income),
+#             "weekly_income": list(weekly_income),
+#             "monthly_income": list(monthly_income),
+#             "yearly_income": list(yearly_income),
+#             "grand_total": grand_total,
+#         }
+
+#         return Response(data)
+
+
 class VendorIncomeView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request, vendor_id):
+        # Exclude cancelled orders
+        non_cancelled_orders = OrderItems.objects.filter(
+            order__vendor_id=vendor_id, 
+            order__order_status__in=['Confirm', 'Shipped', 'Delivered']
+        )
+
         # Daily income
         daily_income = (
-            OrderItems.objects.filter(order__vendor_id=vendor_id)
+            non_cancelled_orders
             .annotate(day=TruncDay('order__order_time'))
             .values('day')
             .annotate(total=Sum(F('price') * F('quantity'), output_field=DecimalField()))
@@ -366,7 +430,7 @@ class VendorIncomeView(APIView):
 
         # Weekly income
         weekly_income = (
-            OrderItems.objects.filter(order__vendor_id=vendor_id)
+            non_cancelled_orders
             .annotate(week=TruncWeek('order__order_time'))
             .values('week')
             .annotate(total=Sum(F('price') * F('quantity'), output_field=DecimalField()))
@@ -375,7 +439,7 @@ class VendorIncomeView(APIView):
 
         # Monthly income
         monthly_income = (
-            OrderItems.objects.filter(order__vendor_id=vendor_id)
+            non_cancelled_orders
             .annotate(month=TruncMonth('order__order_time'))
             .values('month')
             .annotate(total=Sum(F('price') * F('quantity'), output_field=DecimalField()))
@@ -384,16 +448,16 @@ class VendorIncomeView(APIView):
 
         # Yearly income
         yearly_income = (
-            OrderItems.objects.filter(order__vendor_id=vendor_id)
+            non_cancelled_orders
             .annotate(year=TruncYear('order__order_time'))
             .values('year')
             .annotate(total=Sum(F('price') * F('quantity'), output_field=DecimalField()))
             .order_by('year')
         )
 
-        # Grand total income
+        # Grand total income (excluding cancelled orders)
         grand_total = (
-            OrderItems.objects.filter(order__vendor_id=vendor_id)
+            non_cancelled_orders
             .aggregate(total=Sum(F('price') * F('quantity'), output_field=DecimalField()))['total'] or 0
         )
 
