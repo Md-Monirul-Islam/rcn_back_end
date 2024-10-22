@@ -214,6 +214,7 @@ class ProductRating(models.Model):
     product = models.ForeignKey(Product,on_delete=models.CASCADE,related_name='product_ratings')
     rating = models.IntegerField()
     reviews = models.TextField()
+    image = models.ImageField(upload_to='Revie&Rating',blank=True,null=True)
     add_time = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

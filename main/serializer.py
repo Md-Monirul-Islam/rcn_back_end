@@ -318,7 +318,7 @@ class CustomerAddressSerializer(serializers.ModelSerializer):
 class ProductReviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductRating
-        fields = ['id', 'customer', 'product', 'rating', 'reviews', 'add_time']
+        fields = ['id', 'customer', 'product', 'rating', 'reviews', 'add_time','image']
 
     def __init__(self, *args, **kwargs):
         super(ProductReviewSerializer, self).__init__(*args, **kwargs)
