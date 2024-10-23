@@ -40,6 +40,7 @@ import decimal
 from decimal import Decimal, InvalidOperation
 import logging
 from django.db.models import Sum, F, DecimalField
+from datetime import timedelta
 
 # Create your views here.
 
@@ -242,11 +243,12 @@ class AddCouponView(generics.ListCreateAPIView):
 class CouponDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Coupon.objects.all()
     serializer_class = CouponCodeSerializer
-    # permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
     
 
 
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def apply_coupon(request):
     product_id = request.query_params.get('product_id')
     coupon_code = request.query_params.get('coupon_code')
@@ -413,64 +415,119 @@ class VendorIncomeView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, vendor_id):
-        # Exclude cancelled orders
         non_cancelled_orders = OrderItems.objects.filter(
-            order__vendor_id=vendor_id, 
+            order__vendor_id=vendor_id,
             order__order_status__in=['Confirm', 'Shipped', 'Delivered']
         )
 
-        # Daily income
-        daily_income = (
-            non_cancelled_orders
-            .annotate(day=TruncDay('order__order_time'))
-            .values('day')
-            .annotate(total=Sum(F('price') * F('quantity'), output_field=DecimalField()))
-            .order_by('day')
-        )
+        # Yearly income (January through December)
+        monthly_income = []
+        current_year = timezone.now().year
+        for month in range(1, 13):  # Loop through all months
+            income_for_month = non_cancelled_orders.filter(
+                order__order_time__month=month, order__order_time__year=current_year
+            ).aggregate(
+                total=Sum(F('price') * F('quantity'), output_field=DecimalField())
+            )['total'] or 0
+            monthly_income.append({"month": month, "total": income_for_month})
 
-        # Weekly income
-        weekly_income = (
-            non_cancelled_orders
-            .annotate(week=TruncWeek('order__order_time'))
-            .values('week')
-            .annotate(total=Sum(F('price') * F('quantity'), output_field=DecimalField()))
-            .order_by('week')
-        )
+        # Grand total income (sum of all sales)
+        grand_total = non_cancelled_orders.aggregate(
+            total=Sum(F('price') * F('quantity'), output_field=DecimalField())
+        )['total'] or 0
 
-        # Monthly income
-        monthly_income = (
-            non_cancelled_orders
-            .annotate(month=TruncMonth('order__order_time'))
-            .values('month')
-            .annotate(total=Sum(F('price') * F('quantity'), output_field=DecimalField()))
-            .order_by('month')
-        )
-
-        # Yearly income
-        yearly_income = (
-            non_cancelled_orders
-            .annotate(year=TruncYear('order__order_time'))
-            .values('year')
-            .annotate(total=Sum(F('price') * F('quantity'), output_field=DecimalField()))
-            .order_by('year')
-        )
-
-        # Grand total income (excluding cancelled orders)
-        grand_total = (
-            non_cancelled_orders
-            .aggregate(total=Sum(F('price') * F('quantity'), output_field=DecimalField()))['total'] or 0
-        )
-
-        # Prepare response data
         data = {
-            "daily_income": list(daily_income),
-            "weekly_income": list(weekly_income),
-            "monthly_income": list(monthly_income),
-            "yearly_income": list(yearly_income),
+            "monthly_income": monthly_income,
             "grand_total": grand_total,
         }
 
         return Response(data)
+
+    def post(self, request, vendor_id):
+        # Calculate total for a specific date range (start_date and end_date)
+        start_date_str = request.data.get('start_date')
+        end_date_str = request.data.get('end_date')
+
+        try:
+            start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+            end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+        except ValueError:
+            return Response({"error": "Invalid date format. Use YYYY-MM-DD."}, status=400)
+
+        total_for_range = OrderItems.objects.filter(
+            order__vendor_id=vendor_id,
+            order__order_time__date__range=[start_date, end_date],
+            order__order_status__in=['Confirm', 'Shipped', 'Delivered']
+        ).aggregate(
+            total=Sum(F('price') * F('quantity'), output_field=DecimalField())
+        )['total'] or 0
+
+        return Response({"total": total_for_range})
+    
+
+
+# class VendorIncomeView(APIView):
+#     permission_classes = [IsAuthenticated]
+
+#     def get(self, request, vendor_id):
+#         # Exclude cancelled orders
+#         non_cancelled_orders = OrderItems.objects.filter(
+#             order__vendor_id=vendor_id, 
+#             order__order_status__in=['Confirm', 'Shipped', 'Delivered']
+#         )
+
+#         # Daily income
+#         daily_income = (
+#             non_cancelled_orders
+#             .annotate(day=TruncDay('order__order_time'))
+#             .values('day')
+#             .annotate(total=Sum(F('price') * F('quantity'), output_field=DecimalField()))
+#             .order_by('day')
+#         )
+
+#         # Weekly income
+#         weekly_income = (
+#             non_cancelled_orders
+#             .annotate(week=TruncWeek('order__order_time'))
+#             .values('week')
+#             .annotate(total=Sum(F('price') * F('quantity'), output_field=DecimalField()))
+#             .order_by('week')
+#         )
+
+#         # Monthly income
+#         monthly_income = (
+#             non_cancelled_orders
+#             .annotate(month=TruncMonth('order__order_time'))
+#             .values('month')
+#             .annotate(total=Sum(F('price') * F('quantity'), output_field=DecimalField()))
+#             .order_by('month')
+#         )
+
+#         # Yearly income
+#         yearly_income = (
+#             non_cancelled_orders
+#             .annotate(year=TruncYear('order__order_time'))
+#             .values('year')
+#             .annotate(total=Sum(F('price') * F('quantity'), output_field=DecimalField()))
+#             .order_by('year')
+#         )
+
+#         # Grand total income (excluding cancelled orders)
+#         grand_total = (
+#             non_cancelled_orders
+#             .aggregate(total=Sum(F('price') * F('quantity'), output_field=DecimalField()))['total'] or 0
+#         )
+
+#         # Prepare response data
+#         data = {
+#             "daily_income": list(daily_income),
+#             "weekly_income": list(weekly_income),
+#             "monthly_income": list(monthly_income),
+#             "yearly_income": list(yearly_income),
+#             "grand_total": grand_total,
+#         }
+
+#         return Response(data)
     
 
 
@@ -723,6 +780,7 @@ class CustomerDetails(generics.RetrieveUpdateDestroyAPIView):
 class UserDetails(generics.RetrieveUpdateDestroyAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
+    permission_classes = [IsAuthenticated]
 
 
 
@@ -1029,13 +1087,15 @@ class SubmitOrder(APIView):
 class OrderItemsList(generics.ListCreateAPIView):
     queryset = OrderItems.objects.all().order_by('-id')
     serializer_class = OrderItemSerializer
+    permission_classes = [IsAuthenticated]
 
     
 
 
 class OrderDetails(generics.ListAPIView):
     # queryset = Order.objects.all()
-    serializer_class = OrderItemSerializer  
+    serializer_class = OrderItemSerializer
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         order_id = self.kwargs['pk']
@@ -1049,6 +1109,7 @@ class OrderDetails(generics.ListAPIView):
 class CustomerOrderItemsList(generics.ListAPIView):
     queryset = OrderItems.objects.all().order_by('-id')
     serializer_class = OrderItemSerializer
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         qs = super().get_queryset()
@@ -1061,6 +1122,7 @@ class CustomerOrderItemsList(generics.ListAPIView):
 class VendorOrderItemsList(generics.ListAPIView):
     queryset = OrderItems.objects.all().order_by('-id')
     serializer_class = OrderItemSerializer
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         qs = super().get_queryset()
@@ -1073,6 +1135,7 @@ class VendorOrderItemsList(generics.ListAPIView):
 
 class VendorCustomerList(generics.ListAPIView):
     serializer_class = CustomerSerializer
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         vendor_id = self.kwargs['pk']
@@ -1092,6 +1155,7 @@ class VendorCustomerList(generics.ListAPIView):
 class VendorCustomerOrderItemList(generics.ListAPIView):
     queryset = OrderItems.objects.all()
     serializer_class = OrderItemSerializer
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         qs = super().get_queryset()
@@ -1105,6 +1169,7 @@ class VendorCustomerOrderItemList(generics.ListAPIView):
 class OrderItemDetailS(generics.RetrieveUpdateDestroyAPIView):
     queryset = OrderItems.objects.all()
     serializer_class = OrderItemSerializer
+    permission_classes = [IsAuthenticated]
 
 
 
@@ -1149,6 +1214,9 @@ class OrderModify(generics.RetrieveUpdateAPIView):
                 elif new_status == 'Cancelled':
                     subject = 'Order Cancelled'
                     html_message = render_to_string('order_cancelled_email.html', context)
+                elif new_status == 'Shipped':
+                    subject = 'Order Shipped'
+                    html_message = render_to_string('order_shipped_email.html', context)
 
                 # Send the email
                 send_mail(
@@ -1168,6 +1236,7 @@ class OrderModify(generics.RetrieveUpdateAPIView):
 
 #order delete
 @csrf_exempt
+@permission_classes([IsAuthenticated])
 def delete_customer_orders(request, customer_id):
     if request.method in ["DELETE", "GET"]:
         # Delete orders for the specified customer
@@ -1213,6 +1282,7 @@ class CustomerAddressViewSet(viewsets.ModelViewSet):
 class CustomerAddressList(generics.ListAPIView):
     queryset = CustomerAddress.objects.all()
     serializer_class = CustomerAddressSerializer
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         qs = super().get_queryset()
@@ -1223,6 +1293,7 @@ class CustomerAddressList(generics.ListAPIView):
 
 
 @csrf_exempt
+@permission_classes([IsAuthenticated])
 def make_default_address(request, pk):
     if request.method == 'POST':
         address_id = request.POST.get('default_address')
@@ -1256,6 +1327,7 @@ def check_default_address(request):
 
 
 
+@permission_classes([IsAuthenticated])
 def customer_dashboard(request, pk):
     customer_id = pk
     # print(customer_id)
@@ -1273,6 +1345,7 @@ def customer_dashboard(request, pk):
 
 
 #Vendor dashboard
+@permission_classes([IsAuthenticated])
 def vendor_dashboard(request, pk):
     vendor_id = pk
     # print(vendor_id)
@@ -1294,6 +1367,7 @@ def vendor_dashboard(request, pk):
 #date,month and year wise
 class VendorDailyReport(generics.ListAPIView):
     serializer_class = VendorDailyReportSerializer
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         vendor_id = self.kwargs['pk']
@@ -1358,11 +1432,13 @@ class AddCategory(generics.ListCreateAPIView):
 class CategoryDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = ProductCategory.objects.all()
     serializer_class = CategoryDetailSerializer
+    permission_classes = [IsAuthenticated]
 
 
 
 
 @csrf_exempt
+@permission_classes([IsAuthenticated])
 def Update_Order_Status(request, pk):
     order_id = pk
     if request.method == "POST":
@@ -1382,6 +1458,7 @@ def Update_Order_Status(request, pk):
 
 
 @csrf_exempt
+@permission_classes([IsAuthenticated])
 def Update_Product_Download_Count(request, product_id):
     if request.method == "POST":
         product = Product.objects.get(id=product_id)
@@ -1435,6 +1512,7 @@ class Wish_Items(generics.ListAPIView):
 
 
 @csrf_exempt
+@permission_classes([IsAuthenticated])
 def remove_from_wishlist(request):
     if request.method == 'POST':
         wishlist_id = request.POST.get('wishlist_id')
@@ -1637,6 +1715,7 @@ class SuperuserLoginView(TokenObtainPairView):
         
         
 
+@permission_classes([IsAuthenticated])
 def admin_dashboard(request):
     totalVendors = Vendor.objects.all().count()
     totalCustomers = Customer.objects.all().count()
@@ -1653,7 +1732,7 @@ def admin_dashboard(request):
 
 
 @api_view(['DELETE'])
-# @permission_classes(IsAdminUser)
+@permission_classes(IsAdminUser)
 def delete_vendor(request, pk):
     try:
         vendor = Vendor.objects.get(pk=pk)
@@ -1735,6 +1814,7 @@ def search_orders_by_date(request):
 
 #For vendor search
 class VendorOrderSearchView(APIView):
+    permission_classes = [IsAuthenticated]
     def get(self, request, vendor_id):
         # Get the 'id' from query parameters for searching
         order_id = request.query_params.get('id', None)
@@ -1764,6 +1844,7 @@ class VendorOrderSearchView(APIView):
 
 
 class VendorDateWiseOrderSearch(APIView):
+    permission_classes = [IsAuthenticated]
     def get(self, request, vendor_id, *args, **kwargs):
         selected_date = request.GET.get('date')
         if selected_date:
@@ -1829,6 +1910,9 @@ def change_order_status(request, order_id):
     elif new_status == 'Cancelled':
         subject = 'Order Cancelled'
         html_message = render_to_string('order_cancelled_email.html', context)
+    elif new_status == 'Shipped':
+        subject = 'Order Shipped'
+        html_message = render_to_string('order_shipped_email.html', context)
 
     if subject and html_message:
         # Send the email
