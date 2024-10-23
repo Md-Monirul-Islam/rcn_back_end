@@ -271,7 +271,6 @@ class VendorProductList(generics.ListCreateAPIView):
     serializer_class = ProductListSerializer
     pagination_class = CustomPagination
     authentication_classes = [JWTAuthentication, TokenAuthentication]
-    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         qs = super().get_queryset()
@@ -774,7 +773,7 @@ class CustomerList(generics.ListCreateAPIView):
 class CustomerDetails(generics.RetrieveUpdateDestroyAPIView):
     queryset = Customer.objects.all()
     serializer_class = CustomerSerializer
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
 
 
 class UserDetails(generics.RetrieveUpdateDestroyAPIView):
@@ -1109,7 +1108,7 @@ class OrderDetails(generics.ListAPIView):
 class CustomerOrderItemsList(generics.ListAPIView):
     queryset = OrderItems.objects.all().order_by('-id')
     serializer_class = OrderItemSerializer
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         qs = super().get_queryset()
@@ -1122,7 +1121,6 @@ class CustomerOrderItemsList(generics.ListAPIView):
 class VendorOrderItemsList(generics.ListAPIView):
     queryset = OrderItems.objects.all().order_by('-id')
     serializer_class = OrderItemSerializer
-    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         qs = super().get_queryset()
@@ -1135,7 +1133,6 @@ class VendorOrderItemsList(generics.ListAPIView):
 
 class VendorCustomerList(generics.ListAPIView):
     serializer_class = CustomerSerializer
-    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         vendor_id = self.kwargs['pk']
@@ -1155,7 +1152,7 @@ class VendorCustomerList(generics.ListAPIView):
 class VendorCustomerOrderItemList(generics.ListAPIView):
     queryset = OrderItems.objects.all()
     serializer_class = OrderItemSerializer
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         qs = super().get_queryset()
@@ -1282,7 +1279,7 @@ class CustomerAddressViewSet(viewsets.ModelViewSet):
 class CustomerAddressList(generics.ListAPIView):
     queryset = CustomerAddress.objects.all()
     serializer_class = CustomerAddressSerializer
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         qs = super().get_queryset()
