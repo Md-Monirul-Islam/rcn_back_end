@@ -1,5 +1,6 @@
 import json
 from uuid import uuid4
+from venv import logger
 from django.db.models import DateField
 from django.shortcuts import redirect
 import requests
@@ -352,64 +353,6 @@ class ProductSpecificationView(APIView):
 
 
 
-# class VendorIncomeView(APIView):
-#     permission_classes = [AllowAny]
-
-#     def get(self, request, vendor_id):
-#         # Daily income
-#         daily_income = (
-#             OrderItems.objects.filter(order__vendor_id=vendor_id)
-#             .annotate(day=TruncDay('order__order_time'))
-#             .values('day')
-#             .annotate(total=Sum(F('price') * F('quantity'), output_field=DecimalField()))
-#             .order_by('day')
-#         )
-
-#         # Weekly income
-#         weekly_income = (
-#             OrderItems.objects.filter(order__vendor_id=vendor_id)
-#             .annotate(week=TruncWeek('order__order_time'))
-#             .values('week')
-#             .annotate(total=Sum(F('price') * F('quantity'), output_field=DecimalField()))
-#             .order_by('week')
-#         )
-
-#         # Monthly income
-#         monthly_income = (
-#             OrderItems.objects.filter(order__vendor_id=vendor_id)
-#             .annotate(month=TruncMonth('order__order_time'))
-#             .values('month')
-#             .annotate(total=Sum(F('price') * F('quantity'), output_field=DecimalField()))
-#             .order_by('month')
-#         )
-
-#         # Yearly income
-#         yearly_income = (
-#             OrderItems.objects.filter(order__vendor_id=vendor_id)
-#             .annotate(year=TruncYear('order__order_time'))
-#             .values('year')
-#             .annotate(total=Sum(F('price') * F('quantity'), output_field=DecimalField()))
-#             .order_by('year')
-#         )
-
-#         # Grand total income
-#         grand_total = (
-#             OrderItems.objects.filter(order__vendor_id=vendor_id)
-#             .aggregate(total=Sum(F('price') * F('quantity'), output_field=DecimalField()))['total'] or 0
-#         )
-
-#         # Prepare response data
-#         data = {
-#             "daily_income": list(daily_income),
-#             "weekly_income": list(weekly_income),
-#             "monthly_income": list(monthly_income),
-#             "yearly_income": list(yearly_income),
-#             "grand_total": grand_total,
-#         }
-
-#         return Response(data)
-
-
 class VendorIncomeView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -462,71 +405,7 @@ class VendorIncomeView(APIView):
         )['total'] or 0
 
         return Response({"total": total_for_range})
-    
 
-
-# class VendorIncomeView(APIView):
-#     permission_classes = [IsAuthenticated]
-
-#     def get(self, request, vendor_id):
-#         # Exclude cancelled orders
-#         non_cancelled_orders = OrderItems.objects.filter(
-#             order__vendor_id=vendor_id, 
-#             order__order_status__in=['Confirm', 'Shipped', 'Delivered']
-#         )
-
-#         # Daily income
-#         daily_income = (
-#             non_cancelled_orders
-#             .annotate(day=TruncDay('order__order_time'))
-#             .values('day')
-#             .annotate(total=Sum(F('price') * F('quantity'), output_field=DecimalField()))
-#             .order_by('day')
-#         )
-
-#         # Weekly income
-#         weekly_income = (
-#             non_cancelled_orders
-#             .annotate(week=TruncWeek('order__order_time'))
-#             .values('week')
-#             .annotate(total=Sum(F('price') * F('quantity'), output_field=DecimalField()))
-#             .order_by('week')
-#         )
-
-#         # Monthly income
-#         monthly_income = (
-#             non_cancelled_orders
-#             .annotate(month=TruncMonth('order__order_time'))
-#             .values('month')
-#             .annotate(total=Sum(F('price') * F('quantity'), output_field=DecimalField()))
-#             .order_by('month')
-#         )
-
-#         # Yearly income
-#         yearly_income = (
-#             non_cancelled_orders
-#             .annotate(year=TruncYear('order__order_time'))
-#             .values('year')
-#             .annotate(total=Sum(F('price') * F('quantity'), output_field=DecimalField()))
-#             .order_by('year')
-#         )
-
-#         # Grand total income (excluding cancelled orders)
-#         grand_total = (
-#             non_cancelled_orders
-#             .aggregate(total=Sum(F('price') * F('quantity'), output_field=DecimalField()))['total'] or 0
-#         )
-
-#         # Prepare response data
-#         data = {
-#             "daily_income": list(daily_income),
-#             "weekly_income": list(weekly_income),
-#             "monthly_income": list(monthly_income),
-#             "yearly_income": list(yearly_income),
-#             "grand_total": grand_total,
-#         }
-
-#         return Response(data)
     
 
 
@@ -719,49 +598,6 @@ class RelatedProductList(generics.ListCreateAPIView):
         return qs
 
 
-# class RelatedProductList(generics.ListAPIView):
-#     serializer_class = ProductListSerializer
-
-#     def get_queryset(self):
-#         product_id = self.kwargs['pk']
-#         product = Product.objects.get(id=product_id)
-#         related_products = Product.objects.filter(category=product.category).exclude(id=product_id)
-#         return related_products
-
-#     def list(self, request, *args, **kwargs):
-#         queryset = self.get_queryset()
-#         serializer = self.get_serializer(queryset, many=True)
-#         data = serializer.data
-#         for product in data:
-#             product_id = product['id']
-#             product['product_image'] = [image.image.url for image in Product.objects.get(id=product_id).product_image.all()]
-#         return Response(data)
-
-# class RelatedProductList(generics.ListAPIView):
-#     serializer_class = ProductListSerializer
-
-#     def get_queryset(self):
-#         product_id = self.kwargs['pk']
-#         product = Product.objects.get(id=product_id)
-#         related_products = Product.objects.filter(category=product.category).exclude(id=product_id)
-#         return related_products
-
-#     def list(self, request, *args, **kwargs):
-#         queryset = self.get_queryset()
-#         serializer = self.get_serializer(queryset, many=True)
-#         data = serializer.data
-#         for product in data:
-#             product_id = product['id']
-#             # Check if product_image exists and is not empty
-#             if 'product_image' in product and product['product_image']:
-#                 product['product_image'] = [image.image.url for image in Product.objects.get(id=product_id).product_image.all()]
-#             else:
-#                 # Set a default value for product_image
-#                 product['product_image'] = []  # Or set it to a placeholder image URL
-#         return Response(data)
-
-
-
 
 class CustomerList(generics.ListCreateAPIView):
     queryset = Customer.objects.all()
@@ -793,127 +629,9 @@ class OrderList(generics.ListAPIView):
     def post(self,request,*args, **kwargs):
         print(request.POST)
         return super().post(request,*args, **kwargs)
-    
 
 
-
-# class SubmitOrder(APIView):
-    # permission_classes = [IsAuthenticated]
-
-    # def post(self, request, *args, **kwargs):
-    #     customer = request.user.customer
-    #     cart_data = request.data.get('cart_items', [])
-    #     total_amount = request.data['total_amount']
-    #     payment_method = request.data.get('payment_method', 'Online Payment')
-    #     select_courier = request.data.get('select_courier', None)
-    #     coupon_code = request.data.get('coupon_code', None)
-
-    #     total_amount = decimal.Decimal(total_amount)
-
-    #     # Validate the courier selection
-    #     if not select_courier:
-    #         return Response({'error': 'Please select a courier service.'}, status=status.HTTP_400_BAD_REQUEST)
-
-    #     # Calculate the total amount on the backend
-    #     first_vendor = None
-    #     product_list = []
-    #     for item in cart_data:
-    #         product_id = item.get('product_id')
-    #         quantity = item.get('quantity', 1)
-    #         product = get_object_or_404(Product, id=product_id)
-
-    #         # Set the vendor to the first product's vendor
-    #         if not first_vendor:
-    #             first_vendor = product.vendor
-
-    #         total_amount += product.price * quantity
-    #         product_list.append({
-    #             'title': product.title,
-    #             'price': product.price,
-    #             'image': product.image.url
-    #         })
-
-    #     # Validate the coupon code if provided
-    #     discount_amount = 0
-    #     if coupon_code:
-    #         coupon = get_object_or_404(Coupon, code=coupon_code, is_active=True)
-    #         discount_amount = coupon.discount_amount
-    #         total_amount -= discount_amount  # Apply discount
-
-    #     # Set order status based on payment method
-    #     order_status = 'Confirm' if payment_method == 'mobile-banking' else 'Pending'
-
-    #     # Create the Order and associate it with the first vendor
-    #     order = Order.objects.create(
-    #         customer=customer,
-    #         vendor=first_vendor,
-    #         total_amount=total_amount,
-    #         order_status=order_status,
-    #         payment_method=payment_method,
-    #         select_courier=select_courier
-    #     )
-
-    #     # Create OrderItems for each product in the cart
-    #     for item in cart_data:
-    #         product_id = item.get('product_id')
-    #         quantity = item.get('quantity', 1)
-    #         product = get_object_or_404(Product, id=product_id)
-
-    #         OrderItems.objects.create(
-    #             order=order,
-    #             product=product,
-    #             quantity=quantity,
-    #             price=product.price
-    #         )
-
-    #     # Send confirmation email
-    #     customer_email = customer.user.email
-    #     vendor = first_vendor.user  # Get the associated vendor user
-    #     vendor_first_name = vendor.first_name
-    #     vendor_last_name = vendor.last_name
-    #     vendor_email = vendor.email
-    #     vendor_phone = first_vendor.phone
-    #     vendor_shop_name = first_vendor.shop_name
-
-    #     # Email subject
-    #     subject = 'Thank You for Your Purchase! Order Confirmation'
-
-    #     # Render email body using a template
-    #     context = {
-    #         'customer_name': customer.user.first_name,
-    #         'order_number': order.id,
-    #         'order_date': order.order_time,
-    #         'product_list': product_list,
-    #         'vendor_first_name': vendor_first_name,
-    #         'vendor_last_name': vendor_last_name,
-    #         'vendor_email': vendor_email,
-    #         'vendor_phone': vendor_phone,
-    #         'payment_method': payment_method,
-    #         'select_courier': select_courier,
-    #         'vendor_shop_name': vendor_shop_name,
-    #         'discount_amount': discount_amount  # Include the discount in the email
-    #     }
-
-    #     # Prepare the email message
-    #     html_message = render_to_string('order_confirmation_email.html', context)
-    #     plain_message = strip_tags(html_message)
-
-    #     recipient_list = [customer_email]
-    #     send_mail(subject, plain_message, settings.DEFAULT_FROM_EMAIL, recipient_list, html_message=html_message)
-
-    #     # Save the sent email details in the SentEmail model
-    #     SentEmail.objects.create(
-    #         recipient=customer_email,
-    #         subject=subject,
-    #         message=plain_message,
-    #         customer=customer.user,  # Link the customer
-    #         vendor=vendor  # Link the vendor's user
-    #     )
-
-    #     # Serialize and return the response
-        # order_serializer = OrderSerializer(order)
-        # return Response(order_serializer.data, status=status.HTTP_201_CREATED)
-    
+   
 
 logger = logging.getLogger(__name__)
 
@@ -1393,15 +1111,9 @@ class VendorDailyReport(generics.ListAPIView):
 
 
 
-        
-
-
 class ProductRatingViewSet(viewsets.ModelViewSet):
     serializer_class = ProductReviewSerializer
     queryset = ProductRating.objects.all()
-
-
-
 
 
 ################### product Category ###################
@@ -1430,7 +1142,6 @@ class CategoryDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = ProductCategory.objects.all()
     serializer_class = CategoryDetailSerializer
     permission_classes = [IsAuthenticated]
-
 
 
 
@@ -1474,13 +1185,10 @@ def Update_Product_Download_Count(request, product_id):
         return JsonResponse(msg)
     
 
-
-
 ### WishList
 class Wish_List(generics.ListCreateAPIView):
     queryset = WishList.objects.all()
     serializer_class = WishListSerializer
-
 
 
 @csrf_exempt
@@ -1507,7 +1215,6 @@ class Wish_Items(generics.ListAPIView):
         return qs
 
 
-
 @csrf_exempt
 @permission_classes([IsAuthenticated])
 def remove_from_wishlist(request):
@@ -1520,8 +1227,6 @@ def remove_from_wishlist(request):
     return JsonResponse(msg)
 
 
-
-
 class VendorCategoryProductsView(generics.ListAPIView):
     def get(self, request, seller_id, category_title, *args, **kwargs):
         # Filter products by seller and category
@@ -1532,8 +1237,6 @@ class VendorCategoryProductsView(generics.ListAPIView):
         
         return Response(serializer.data, status=status.HTTP_200_OK)
     
-
-
 
 class ProductSearchView(APIView):
     def get(self, request, format=None):
@@ -1552,7 +1255,6 @@ class ProductSearchView(APIView):
 
 
 # Payment using Sslcommerz
-
 base_url = 'http://127.0.0.1:8000'
 
 @permission_classes([AllowAny])
@@ -1688,9 +1390,6 @@ def payment_cancel(request):
         return Response({'error': 'Transaction not found'}, status=status.HTTP_404_NOT_FOUND)
     
 
-
-
-
 class SuperuserLoginView(TokenObtainPairView):
     permission_classes = [AllowAny]
     def post(self, request, *args, **kwargs):
@@ -1711,7 +1410,6 @@ class SuperuserLoginView(TokenObtainPairView):
         return serializer.user
         
         
-
 @permission_classes([IsAuthenticated])
 def admin_dashboard(request):
     totalVendors = Vendor.objects.all().count()
@@ -1750,7 +1448,6 @@ class OrderListForAdminView(generics.ListAPIView):
 
 
 
-
 class CustomerOrderItemListShowForAdmin(generics.ListAPIView):
     queryset = OrderItems.objects.all()
     serializer_class = OrderItemSerializer
@@ -1762,7 +1459,6 @@ class CustomerOrderItemListShowForAdmin(generics.ListAPIView):
         qs = qs.filter(order__customer__id=customer_id)
         return qs
     
-
 
 
 class VendorOrderedProductsListView(generics.ListAPIView):
@@ -1836,7 +1532,6 @@ class VendorOrderSearchView(APIView):
             orders = Order.objects.filter(vendor_id=vendor_id)
             serializer = OrderSerializer(orders, many=True)
             return Response({'data': serializer.data}, status=200)
-
 
 
 
