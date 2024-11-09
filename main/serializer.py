@@ -8,12 +8,21 @@ from .models import Product, ProductCategory, ProductImage, ProductSpecification
 
 
 
+# class UserSerializer(serializers.ModelSerializer):
+#     password = serializers.CharField(write_only=True, required=False)
+
+#     class Meta:
+#         model = User
+#         fields = ['id', 'first_name', 'last_name', 'username', 'email', 'password']
+
+
 class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=False)
 
     class Meta:
         model = User
         fields = ['id', 'first_name', 'last_name', 'username', 'email', 'password']
+        read_only_fields = ['username']
 
 # class UserSerializer(serializers.ModelSerializer):
 #     password = serializers.CharField(write_only=True, required=False)
@@ -44,34 +53,18 @@ class VendorDetailSerializer(serializers.ModelSerializer):
         fields = ['id', 'user', 'address', 'phone', 'profile_image']
 
     def update(self, instance, validated_data):
-        # Extract user data from validated_data
         user_data = validated_data.pop('user', None)
-        
-        # Update vendor fields
-        instance.phone = validated_data.get('phone', instance.phone)
-        instance.address = validated_data.get('address', instance.address)
-        if 'profile_image' in validated_data:
-            instance.profile_image = validated_data.get('profile_image', instance.profile_image)
-        instance.save()
-
-        # Update user fields if user data is provided
         if user_data:
-            user = instance.user
+            user_instance = instance.user
+            # Remove the username field if present to avoid updating it
+            user_data.pop('username', None)
+            for attr, value in user_data.items():
+                setattr(user_instance, attr, value)
+            user_instance.save()
 
-            # Check if the username needs to be updated
-            new_username = user_data.get('username')
-            if new_username and new_username != user.username:
-                # Check if the new username already exists
-                if User.objects.filter(username=new_username).exists():
-                    raise serializers.ValidationError({"username": "A user with that username already exists."})
-                user.username = new_username
-
-            user.first_name = user_data.get('first_name', user.first_name)
-            user.last_name = user_data.get('last_name', user.last_name)
-            user.email = user_data.get('email', user.email)
-            if 'password' in user_data:
-                user.set_password(user_data['password'])  # Update password if provided
-            user.save()
+        instance.profile_image = validated_data.get('profile_image', instance.profile_image)
+        instance.phone = validated_data.get('phone', instance.phone)
+        instance.save()
 
         return instance
 
@@ -150,16 +143,43 @@ class ProductDetailSerializer(serializers.ModelSerializer):
 
 
 
+# class CustomerSerializer(serializers.ModelSerializer):
+#     user = UserSerializer()
+#     orders = serializers.SerializerMethodField()
+
+#     class Meta:
+#         model = Customer
+#         fields = ['id', 'user', 'profile_image', 'phone','orders']
+
+#     def get_orders(self, customer):
+#         # Get all OrderItems related to this customer and include order details
+#         order_items = OrderItems.objects.filter(order__customer=customer).select_related('order')
+#         return OrderItemSerializer(order_items, many=True).data
+
+#     def update(self, instance, validated_data):
+#         user_data = validated_data.pop('user', None)
+#         if user_data:
+#             user_instance = instance.user
+#             for attr, value in user_data.items():
+#                 setattr(user_instance, attr, value)
+#             user_instance.save()
+
+#         instance.profile_image = validated_data.get('profile_image', instance.profile_image)
+#         instance.phone = validated_data.get('phone', instance.phone)
+#         instance.save()
+
+#         return instance
+
+
 class CustomerSerializer(serializers.ModelSerializer):
     user = UserSerializer()
     orders = serializers.SerializerMethodField()
 
     class Meta:
         model = Customer
-        fields = ['id', 'user', 'profile_image', 'phone','orders']
+        fields = ['id', 'user', 'profile_image', 'phone', 'orders']
 
     def get_orders(self, customer):
-        # Get all OrderItems related to this customer and include order details
         order_items = OrderItems.objects.filter(order__customer=customer).select_related('order')
         return OrderItemSerializer(order_items, many=True).data
 
@@ -167,6 +187,8 @@ class CustomerSerializer(serializers.ModelSerializer):
         user_data = validated_data.pop('user', None)
         if user_data:
             user_instance = instance.user
+            # Remove the username field if present to avoid updating it
+            user_data.pop('username', None)
             for attr, value in user_data.items():
                 setattr(user_instance, attr, value)
             user_instance.save()
@@ -176,6 +198,7 @@ class CustomerSerializer(serializers.ModelSerializer):
         instance.save()
 
         return instance
+
 
 class CustomerDetails(generics.RetrieveUpdateDestroyAPIView):
     queryset = Customer.objects.all()
